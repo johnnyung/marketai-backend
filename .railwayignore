@@ -1,0 +1,4 @@
+# Force clean builds - ignore dist cache
+dist/
+node_modules/.cache/
+.next/

@@ -1,0 +1,143 @@
+import { Router } from 'express';
+import { db } from '../db/index.js';
+import { authenticateToken } from '../middleware/auth.js';
+
+const router = Router();
+
+// GET /api/learning/modules - Get all learning modules
+router.get('/modules', async (req, res) => {
+  try {
+    const { category, difficulty } = req.query;
+
+    let query = `
+      SELECT id, title, category, difficulty, description, duration_minutes, 
+             order_index, prerequisites, tags
+      FROM learning_modules
+      WHERE is_published = true
+    `;
+    const params: any[] = [];
+
+    if (category) {
+      params.push(category);
+      query += ` AND category = $${params.length}`;
+    }
+    if (difficulty) {
+      params.push(difficulty);
+      query += ` AND difficulty = $${params.length}`;
+    }
+
+    query += ` ORDER BY order_index ASC, title ASC`;
+
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/learning/modules/:id - Get single module with content
+router.get('/modules/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `SELECT * FROM learning_modules WHERE id = $1 AND is_published = true`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Module not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/learning/progress - Get user's learning progress
+router.get('/progress', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+
+    const result = await db.query(
+      `SELECT lp.*, lm.title as module_title, lm.category, lm.difficulty
+       FROM learning_progress lp
+       JOIN learning_modules lm ON lp.module_id = lm.id
+       WHERE lp.user_id = $1
+       ORDER BY lp.updated_at DESC`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/learning/progress - Update learning progress
+router.post('/progress', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { moduleId, status, progressPct, timeSpentMinutes, quizScore, notes } = req.body;
+
+    // Check if module exists
+    const moduleCheck = await db.query(
+      `SELECT title FROM learning_modules WHERE id = $1`,
+      [moduleId]
+    );
+
+    if (moduleCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Module not found' });
+    }
+
+    const moduleTitle = moduleCheck.rows[0].title;
+    const completedAt = status === 'completed' ? new Date() : null;
+
+    const result = await db.query(
+      `INSERT INTO learning_progress (
+        user_id, module_id, module_title, status, progress_pct,
+        time_spent_minutes, quiz_score, notes, completed_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (user_id, module_id) DO UPDATE SET
+        status = EXCLUDED.status,
+        progress_pct = EXCLUDED.progress_pct,
+        time_spent_minutes = learning_progress.time_spent_minutes + EXCLUDED.time_spent_minutes,
+        quiz_score = COALESCE(EXCLUDED.quiz_score, learning_progress.quiz_score),
+        notes = COALESCE(EXCLUDED.notes, learning_progress.notes),
+        completed_at = EXCLUDED.completed_at,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *`,
+      [userId, moduleId, moduleTitle, status, progressPct, timeSpentMinutes, quizScore, notes, completedAt]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/learning/stats - Get user's learning statistics
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+
+    const stats = await db.query(
+      `SELECT 
+        COUNT(*) as total_modules_started,
+        COUNT(*) FILTER (WHERE status = 'completed') as modules_completed,
+        SUM(time_spent_minutes) as total_time_minutes,
+        AVG(quiz_score) FILTER (WHERE quiz_score IS NOT NULL) as avg_quiz_score,
+        AVG(progress_pct) as avg_progress
+       FROM learning_progress
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    res.json(stats.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;
