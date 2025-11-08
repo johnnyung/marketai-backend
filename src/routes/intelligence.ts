@@ -1,15 +1,52 @@
 // src/routes/intelligence.ts
-// FIXED: Properly group and pass all data types to AI
+// UPDATED: Added real data test endpoint + toggle for real vs mock data
 
 import express from 'express';
 import dataIngestionService from '../services/dataIngestionService.js';
 import aiAnalysisEngine from '../services/aiAnalysisEngine.js';
+import realDataIntegrationService from '../services/realDataIntegrationService.js';
 
 const router = express.Router();
 
 // Cache for daily intelligence
 let cachedIntelligence: any = null;
 let cacheExpiry: Date | null = null;
+
+// ✅ NEW: Toggle between real and mock data
+const USE_REAL_DATA = process.env.USE_REAL_DATA === 'true';
+
+/**
+ * ✅ NEW: GET /api/intelligence/test-real-data
+ * Test endpoint to verify real data sources are working
+ */
+router.get('/test-real-data', async (req, res) => {
+  try {
+    console.log('\n🧪 === TESTING REAL DATA SOURCES ===\n');
+    
+    const realData = await realDataIntegrationService.getAllRealData();
+    
+    res.json({
+      success: true,
+      message: 'Real data sources are working!',
+      data: realData,
+      stats: {
+        insiderTrades: realData.insiderTrades.length,
+        socialMentions: realData.socialSentiment.length,
+        technicalSignals: realData.technicalSignals.length,
+        topTrendingTickers: realData.summary.topTrendingTickers
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('❌ Real data test failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Real data test failed',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
 
 /**
  * GET /api/intelligence/daily
@@ -28,11 +65,43 @@ router.get('/daily', async (req, res) => {
     }
     
     console.log('🔄 Cache expired or refresh requested - will generate new intelligence');
-    console.log('🔄 Generating new intelligence with AI...');
+    console.log(`🎯 Using ${USE_REAL_DATA ? 'REAL' : 'MOCK'} data`);
     
-    // Step 1: Ingest all market data
-    console.log('📊 Step 1: Ingesting all market data...');
-    const allData = await dataIngestionService.ingestAll();
+    let allData: any[];
+    
+    if (USE_REAL_DATA) {
+      // ✅ USE REAL DATA
+      console.log('📡 Step 1: Fetching REAL market data...');
+      const realData = await realDataIntegrationService.getAllRealData();
+      
+      // Convert real data to standard format
+      allData = [
+        ...realData.insiderTrades.map((trade: any) => ({
+          ...trade,
+          type: 'insider_trade',
+          timestamp: new Date(trade.filingDate)
+        })),
+        ...realData.socialSentiment.map((mention: any) => ({
+          ...mention,
+          type: 'social',
+          source: 'Reddit',
+          timestamp: new Date()
+        })),
+        ...realData.technicalSignals.map((signal: any) => ({
+          ...signal,
+          type: 'technical_signal',
+          timestamp: new Date()
+        }))
+      ];
+      
+      console.log(`✅ Real data collected: ${allData.length} data points`);
+      
+    } else {
+      // ✅ USE MOCK DATA (current behavior)
+      console.log('📊 Step 1: Ingesting mock market data...');
+      allData = await dataIngestionService.ingestAll();
+      console.log(`✅ Mock data collected: ${allData.length} data points`);
+    }
     
     // CRITICAL: Group data by type for AI
     console.log('🔄 Step 2: Grouping data by type...');
@@ -92,11 +161,12 @@ router.get('/daily', async (req, res) => {
         item.type === 'social' && 
         (item.source === 'Twitter/X' || 
          item.source === 'StockTwits' || 
-         item.source === 'Discord Communities')
+         item.source === 'Discord Communities' ||
+         item.source === 'Reddit')
       )
     };
     
-    console.log('✅ Data ingested:', {
+    console.log('✅ Data grouped:', {
       political: groupedData.politicalTrades.length,
       insider: groupedData.insiderActivity.length,
       news: groupedData.news.length,
@@ -111,7 +181,7 @@ router.get('/daily', async (req, res) => {
       enhancedSocial: groupedData.enhancedSocial.length
     });
     
-    // Step 2: Analyze with Claude AI
+    // Step 3: Analyze with Claude AI
     console.log('🤖 Step 3: Analyzing with Claude AI...');
     const analysis = await aiAnalysisEngine.analyzeMarketData(groupedData);
     
@@ -136,7 +206,8 @@ router.get('/daily', async (req, res) => {
           economic: groupedData.economicEvents.length
         },
         marketSentiment: analysis.marketSentiment,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        dataSource: USE_REAL_DATA ? 'REAL' : 'MOCK' // ✅ Show which data source was used
       },
       opportunities: analysis.opportunities,
       risks: analysis.risks,
