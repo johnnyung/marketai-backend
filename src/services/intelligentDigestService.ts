@@ -1,11 +1,12 @@
 // backend/src/services/intelligentDigestService.ts
-// AI-Powered Data Ingestion & Smart Storage - COMPLETE WORKING VERSION
+// UPDATED WITH NEWS AGGREGATION
 
 import { Pool } from 'pg';
 import crypto from 'crypto';
 import secEdgarService from './secEdgarService.js';
 import redditService from './redditService.js';
 import technicalIndicatorsService from './technicalIndicatorsService.js';
+import newsAggregatorService from './newsAggregatorService.js';
 
 interface DigestEntry {
   sourceType: string;
@@ -38,9 +39,6 @@ class IntelligentDigestService {
     });
   }
   
-  /**
-   * Main ingestion pipeline
-   */
   async ingestAndStore(): Promise<{
     collected: number;
     processed: number;
@@ -56,31 +54,25 @@ class IntelligentDigestService {
     let duplicates = 0;
     
     try {
-      // STEP 1: Collect raw data
       console.log('📡 Step 1: Collecting data from all sources...');
       const rawEntries = await this.collectAllData();
       collected = rawEntries.length;
       console.log(`✅ Collected ${collected} raw entries\n`);
       
-      // STEP 2: Process with AI
       console.log('🤖 Step 2: AI analyzing and categorizing...');
       for (const entry of rawEntries) {
         try {
-          // Check duplicates
           if (await this.isDuplicate(entry.contentHash)) {
             duplicates++;
             continue;
           }
           
-          // AI analysis
           const analysis = await this.analyzeWithAI(entry);
           
-          // Store if relevant (lowered threshold to capture more data)
-          if (analysis.relevanceScore >= 20) {
+          if (analysis.relevanceScore >= 40) {
             await this.storeEntry(entry, analysis);
             stored++;
             
-            // Update ticker tracking
             for (const ticker of analysis.entities.tickers) {
               await this.updateTickerTracking(ticker, analysis);
             }
@@ -94,11 +86,9 @@ class IntelligentDigestService {
         }
       }
       
-      // STEP 3: Cleanup
       console.log('\n🧹 Step 3: Cleaning up expired data...');
       await this.cleanupExpiredData();
       
-      // STEP 4: Stats
       const stats = await this.recordStatistics(collected, stored, duplicates);
       
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -116,9 +106,6 @@ class IntelligentDigestService {
     }
   }
   
-  /**
-   * Collect data from all sources
-   */
   private async collectAllData(): Promise<DigestEntry[]> {
     const entries: DigestEntry[] = [];
     
@@ -152,7 +139,22 @@ class IntelligentDigestService {
       console.error('  ✗ Reddit failed:', error);
     }
     
-    // Source 3: Technical (for top tickers only)
+    // Source 3: NEWS FEEDS (NEW!)
+    try {
+      const news = await newsAggregatorService.getRecentNews(24);
+      entries.push(...news.map((article: any) => ({
+        sourceType: 'news',
+        sourceName: article.source,
+        rawData: article,
+        eventTimestamp: article.pubDate,
+        contentHash: this.generateHash(article.link)
+      })));
+      console.log(`  ✓ News: ${news.length} articles`);
+    } catch (error) {
+      console.error('  ✗ News aggregation failed:', error);
+    }
+    
+    // Source 4: Technical
     try {
       const topTickers = await this.getTopTickers(5);
       for (const ticker of topTickers) {
@@ -176,9 +178,6 @@ class IntelligentDigestService {
     return entries;
   }
   
-  /**
-   * AI analyzes a single entry
-   */
   private async analyzeWithAI(entry: DigestEntry): Promise<AIAnalysis> {
     const analysis: AIAnalysis = {
       relevanceScore: 50,
@@ -189,7 +188,6 @@ class IntelligentDigestService {
       sentiment: 'neutral'
     };
     
-    // Insider trade analysis
     if (entry.sourceType === 'insider_trade') {
       const trade = entry.rawData;
       analysis.relevanceScore = trade.totalValue > 1000000 ? 90 : 60;
@@ -201,7 +199,6 @@ class IntelligentDigestService {
       analysis.sentiment = trade.transactionType === 'buy' ? 'bullish' : 'bearish';
     }
     
-    // Social sentiment analysis
     else if (entry.sourceType === 'social_reddit') {
       const mention = entry.rawData;
       analysis.relevanceScore = Math.min(100, mention.mentions * 5);
@@ -212,7 +209,24 @@ class IntelligentDigestService {
       analysis.sentiment = mention.sentiment > 0 ? 'bullish' : 'bearish';
     }
     
-    // Technical analysis
+    else if (entry.sourceType === 'news') {
+      const article = entry.rawData;
+      analysis.relevanceScore = newsAggregatorService.calculateRelevance(article);
+      analysis.summary = article.title;
+      const tickers = newsAggregatorService.extractTickers(`${article.title} ${article.description}`);
+      analysis.entities.tickers = tickers.slice(0, 3);
+      analysis.tags = ['news', article.category || 'market'];
+      
+      const text = `${article.title} ${article.description}`.toLowerCase();
+      if (text.includes('surge') || text.includes('rally') || text.includes('beats')) {
+        analysis.sentiment = 'bullish';
+      } else if (text.includes('plunge') || text.includes('crash') || text.includes('misses')) {
+        analysis.sentiment = 'bearish';
+      }
+      
+      analysis.importance = analysis.relevanceScore >= 70 ? 'high' : 'medium';
+    }
+    
     else if (entry.sourceType === 'technical_signal') {
       const tech = entry.rawData;
       analysis.relevanceScore = tech.signals.length * 15;
@@ -226,9 +240,6 @@ class IntelligentDigestService {
     return analysis;
   }
   
-  /**
-   * Store entry in database
-   */
   private async storeEntry(entry: DigestEntry, analysis: AIAnalysis): Promise<void> {
     const expiresAt = this.calculateExpiration(entry.sourceType);
     
@@ -259,9 +270,6 @@ class IntelligentDigestService {
     ]);
   }
   
-  /**
-   * Check if duplicate
-   */
   private async isDuplicate(contentHash: string): Promise<boolean> {
     const result = await this.pool.query(
       'SELECT id FROM digest_entries WHERE content_hash = $1',
@@ -270,17 +278,10 @@ class IntelligentDigestService {
     return result.rows.length > 0;
   }
   
-  /**
-   * Update ticker tracking
-   */
   private async updateTickerTracking(ticker: string, analysis: AIAnalysis): Promise<void> {
-    // For now, just log it. We can add a ticker tracking table later if needed.
     console.log(`  📊 Tracking ${ticker} (${analysis.sentiment})`);
   }
   
-  /**
-   * Get top tickers for technical analysis
-   */
   private async getTopTickers(limit: number): Promise<string[]> {
     try {
       const result = await this.pool.query(`
@@ -294,14 +295,10 @@ class IntelligentDigestService {
       
       return result.rows.map(row => row.ticker);
     } catch (error) {
-      // If no data yet, return default tickers
       return ['AAPL', 'NVDA', 'TSLA', 'META', 'GOOGL'].slice(0, limit);
     }
   }
   
-  /**
-   * Calculate expiration
-   */
   private calculateExpiration(sourceType: string): Date {
     const retentionDays: Record<string, number> = {
       'insider_trade': 90,
@@ -319,9 +316,6 @@ class IntelligentDigestService {
     return expires;
   }
   
-  /**
-   * Cleanup expired data
-   */
   private async cleanupExpiredData(): Promise<void> {
     const result = await this.pool.query(`
       DELETE FROM digest_entries
@@ -331,9 +325,6 @@ class IntelligentDigestService {
     console.log(`  ✓ Removed ${result.rowCount} expired entries`);
   }
   
-  /**
-   * Record statistics
-   */
   private async recordStatistics(collected: number, stored: number, duplicates: number): Promise<any> {
     const stats = await this.pool.query(`
       INSERT INTO digest_stats (
@@ -349,9 +340,6 @@ class IntelligentDigestService {
     return stats.rows[0];
   }
   
-  /**
-   * Get digest summary for UI
-   */
   async getDigestSummary(): Promise<any> {
     const [total, byType, recent] = await Promise.all([
       this.pool.query('SELECT COUNT(*) as count FROM digest_entries WHERE expires_at > NOW()'),
