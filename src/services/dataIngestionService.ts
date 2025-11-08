@@ -1,8 +1,17 @@
 // src/services/dataIngestionService.ts
 // COMPLETE DATA ENGINE: All news, political trades, insider activity, social sentiment
+// PHASE 7: Added institutional, enhanced political, and technical analysis
+// PHASE 8: Added crypto, earnings, macro, and enhanced social intelligence
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import institutionalIntelligence from './institutionalIntelligence.js';
+import enhancedPoliticalIntelligence from './enhancedPoliticalIntelligence.js';
+import technicalAnalysis from './technicalAnalysis.js';
+import cryptoIntelligence from './cryptoIntelligence.js';
+import earningsIntelligence from './earningsIntelligence.js';
+import macroIntelligence from './macroIntelligence.js';
+import enhancedSocial from './enhancedSocial.js';
 
 interface DataSource {
   name: string;
@@ -50,14 +59,17 @@ class DataIngestionService {
 
   /**
    * MASTER INGESTION: Pull all data from all sources
+   * PHASE 7: Now includes institutional, enhanced political, and technical analysis
+   * PHASE 8: Now includes crypto, earnings, macro, and enhanced social intelligence
    */
   async ingestAll(): Promise<DataItem[]> {
-    console.log('🔄 Starting complete data ingestion...');
+    console.log('🔄 Starting complete data ingestion (Phase 5 + 7 + 8)...');
     
     const allData: DataItem[] = [];
     const promises = [];
 
-    // Political trades
+    // PHASE 5 SOURCES (Core 5)
+    // Political trades (basic)
     promises.push(this.fetchPoliticalTrades());
     
     // Insider trading
@@ -72,6 +84,43 @@ class DataIngestionService {
     // Economic events
     promises.push(this.fetchEconomicCalendar());
     
+    // PHASE 7 SOURCES (Advanced intelligence)
+    // Institutional intelligence (13F filings, whale trades, short interest)
+    if (process.env.ENABLE_INSTITUTIONAL !== 'false') {
+      promises.push(institutionalIntelligence.fetchAll());
+    }
+    
+    // Enhanced political (committees, lobbying, contributions, votes)
+    if (process.env.ENABLE_ENHANCED_POLITICAL !== 'false') {
+      promises.push(enhancedPoliticalIntelligence.fetchAll());
+    }
+    
+    // Technical analysis (RSI, MACD, patterns, volume)
+    if (process.env.ENABLE_TECHNICAL !== 'false') {
+      promises.push(technicalAnalysis.fetchAll());
+    }
+    
+    // PHASE 8 SOURCES (Market context)
+    // Crypto intelligence (whale wallets, exchange flows, sentiment)
+    if (process.env.ENABLE_CRYPTO !== 'false') {
+      promises.push(cryptoIntelligence.fetchAll());
+    }
+    
+    // Earnings intelligence (calendar, estimates, surprises, patterns)
+    if (process.env.ENABLE_EARNINGS !== 'false') {
+      promises.push(earningsIntelligence.fetchAll());
+    }
+    
+    // Macro intelligence (Fed, yields, dollar, commodities, global markets)
+    if (process.env.ENABLE_MACRO !== 'false') {
+      promises.push(macroIntelligence.fetchAll());
+    }
+    
+    // Enhanced social (Twitter/X, StockTwits, Discord)
+    if (process.env.ENABLE_ENHANCED_SOCIAL !== 'false') {
+      promises.push(enhancedSocial.fetchAll());
+    }
+    
     try {
       const results = await Promise.allSettled(promises);
       
@@ -84,7 +133,7 @@ class DataIngestionService {
         }
       });
       
-      console.log(`✅ Total data ingested: ${allData.length} items`);
+      console.log(`✅ Total data ingested: ${allData.length} items (Phase 5 + 7 + 8)`);
       return allData;
       
     } catch (error: any) {
