@@ -118,3 +118,7 @@ API Endpoints:
 });
 
 export default app;
+
+// Add Digest routes
+import digestRoutes from './routes/digest.js';
+app.use('/api/digest', digestRoutes);
