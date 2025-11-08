@@ -75,8 +75,8 @@ class IntelligentDigestService {
           // AI analysis
           const analysis = await this.analyzeWithAI(entry);
           
-          // Store if relevant
-          if (analysis.relevanceScore >= 40) {
+          // Store if relevant (lowered threshold to capture more data)
+          if (analysis.relevanceScore >= 20) {
             await this.storeEntry(entry, analysis);
             stored++;
             
