@@ -18,7 +18,8 @@ import journalRoutes from './routes/journal.js';
 import learningRoutes from './routes/learning.js';
 import calendarRoutes from './routes/calendar.js';
 import intelligenceRoutes from './routes/intelligence.js';
-import dataRoutes from './routes/data.js'; // ✅ PHASE 5: Added data ingestion routes
+import dataRoutes from './routes/data.js';
+import digestRoutes from './routes/digest.js';
 
 dotenv.config();
 
@@ -56,7 +57,8 @@ app.use('/api/journal', journalRoutes);
 app.use('/api/learning', learningRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/intelligence', intelligenceRoutes);
-app.use('/api/data', dataRoutes); // ✅ PHASE 5: Added complete data ingestion
+app.use('/api/data', dataRoutes);
+app.use('/api/digest', digestRoutes);
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -106,19 +108,12 @@ API Endpoints:
   GET  /api/news/latest
   POST /api/ai/chat
 
-  📊 PHASE 5 - Data Intelligence:
+  📊 Data Intelligence:
   GET  /api/data/all              - All data sources
-  GET  /api/data/political        - Political trades
-  GET  /api/data/insider          - Insider activity
-  GET  /api/data/news             - News articles
-  GET  /api/data/social           - Social sentiment
-  GET  /api/data/economic         - Economic calendar
-  GET  /api/data/ticker/:symbol   - Data for specific ticker
+  GET  /api/digest/summary        - Digest statistics
+  POST /api/digest/ingest         - Trigger data collection
+  GET  /api/digest/entries        - Get digest entries
   `);
 });
 
 export default app;
-
-// Add Digest routes
-import digestRoutes from './routes/digest.js';
-app.use('/api/digest', digestRoutes);
