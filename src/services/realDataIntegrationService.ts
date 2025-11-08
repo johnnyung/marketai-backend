@@ -1,9 +1,9 @@
 // backend/src/services/realDataIntegrationService.ts
-// Combines all real data sources: SEC EDGAR + Reddit + Technical Indicators
+// FIXED: Added .js extensions to imports
 
-import secEdgarService from './secEdgarService';
-import redditService from './redditService';
-import technicalIndicatorsService from './technicalIndicatorsService';
+import secEdgarService from './secEdgarService.js';
+import redditService from './redditService.js';
+import technicalIndicatorsService from './technicalIndicatorsService.js';
 
 interface RealMarketData {
   insiderTrades: any[];
@@ -33,7 +33,7 @@ class RealDataIntegrationService {
       const allTickers = this.extractUniqueTickers(insiderTrades, socialSentiment);
       
       // Fetch technical indicators for top tickers (limited by rate limits)
-      const topTickers = allTickers.slice(0, 10); // Top 10 to avoid rate limits
+      const topTickers = allTickers.slice(0, 10);
       console.log(`\n📊 Fetching technical indicators for: ${topTickers.join(', ')}\n`);
       
       const technicalSignals = await technicalIndicatorsService.getBatchTechnicalIndicators(topTickers);
@@ -111,14 +111,14 @@ class RealDataIntegrationService {
     return Array.from(tickers)
       .filter(ticker => ticker.length <= 5 && ticker.length >= 1)
       .sort((a, b) => {
-        // Sort by relevance (how many sources mention it)
+        // Sort by relevance
         const aCount = insiderTrades.filter(t => t.ticker === a).length +
                       (socialSentiment.find(s => s.ticker === a)?.mentions || 0);
         const bCount = insiderTrades.filter(t => t.ticker === b).length +
                       (socialSentiment.find(s => s.ticker === b)?.mentions || 0);
         return bCount - aCount;
       })
-      .slice(0, 30); // Top 30 tickers
+      .slice(0, 30);
   }
 }
 
