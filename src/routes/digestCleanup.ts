@@ -181,4 +181,24 @@ router.get('/quality-report', async (req, res) => {
   }
 });
 
+/**
+ * Get server time and timezone info
+ * GET /api/digest/server-time
+ */
+router.get('/server-time', (req, res) => {
+  const now = new Date();
+  res.json({
+    serverTime: now.toISOString(),
+    serverTimeLocal: now.toString(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timestamp: now.getTime(),
+    unixSeconds: Math.floor(now.getTime() / 1000),
+    nodeEnv: process.env.NODE_ENV,
+    checks: {
+      oneYearAgo: new Date(Date.now() - (365 * 24 * 60 * 60 * 1000)).toISOString(),
+      oneDayFromNow: new Date(Date.now() + (24 * 60 * 60 * 1000)).toISOString()
+    }
+  });
+});
+
 export default router;
