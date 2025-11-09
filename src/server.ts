@@ -25,6 +25,7 @@ import dataRoutes from './routes/data.js';
 import digestRoutes from './routes/digest.js';
 import digestCleanupRoutes from './routes/digestCleanup.js';
 import scheduledIngestionRoutes from './routes/scheduledIngestionRoutes.js';
+import dailyIntelligenceRoutes from './routes/dailyIntelligence.js';
 
 dotenv.config();
 
@@ -62,6 +63,7 @@ app.use('/api/journal', journalRoutes);
 app.use('/api/learning', learningRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/intelligence', intelligenceRoutes);
+app.use('/api/intelligence', dailyIntelligenceRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/digest', digestRoutes);
 app.use('/api/digest', digestCleanupRoutes);
@@ -124,6 +126,12 @@ API Endpoints:
   POST /api/digest/cleanup               - Clean bad data
   GET  /api/digest/scheduler/status      - Scheduler status
   POST /api/digest/scheduler/trigger     - Manual trigger
+  
+  📊 Daily Intelligence Reports:
+  POST /api/intelligence/daily/generate  - Generate today's report
+  GET  /api/intelligence/daily/latest    - Get latest report
+  GET  /api/intelligence/daily/:date     - Get report by date
+  GET  /api/intelligence/daily/recent    - Get recent reports
   `);
   
   // Start scheduled ingestion service

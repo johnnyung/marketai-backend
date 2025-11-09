@@ -3,6 +3,7 @@
 
 import cron, { ScheduledTask } from 'node-cron';
 import intelligentDigestService from './intelligentDigestService.js';
+import dailyIntelligenceService from './dailyIntelligenceService.js';
 import { Pool } from 'pg';
 
 const pool = new Pool({
@@ -129,6 +130,15 @@ class ScheduledIngestionService {
       
       const total = expiredResult.removed + lowQualityResult.removed + oldResult.removed;
       console.log(`\n✅ Total cleaned: ${total} entries`);
+      
+      // Generate daily intelligence report
+      console.log('\n📊 Generating Daily Intelligence Report...');
+      try {
+        const report = await dailyIntelligenceService.generateDailyReport();
+        console.log(`✅ Daily report generated: ${report.topStories.length} top stories`);
+      } catch (error) {
+        console.error('❌ Daily report generation failed:', error);
+      }
       
       console.log('✅ === SCHEDULED CLEANUP COMPLETE ===\n');
       
