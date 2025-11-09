@@ -10,6 +10,8 @@ import newsAggregatorService from './newsAggregatorService.js';
 import politicalIntelligenceService from './politicalIntelligenceService.js';
 import economicDataService from './economicDataService.js';
 import cryptoIntelligenceService from './cryptoIntelligenceService.js';
+import geopoliticalIntelligenceService from './geopoliticalIntelligenceService.js';
+import earningsMAService from './earningsMAService.js';
 
 interface DigestEntry {
   sourceType: string;
@@ -202,7 +204,37 @@ class IntelligentDigestService {
       console.error('  ✗ Crypto intelligence failed:', error);
     }
     
-    // Source 7: Technical (reduced frequency to save API calls)
+    // Source 7: GEOPOLITICAL INTELLIGENCE (PHASE 5 - NEW!)
+    try {
+      const geopolitical = await geopoliticalIntelligenceService.getGeopoliticalEvents();
+      entries.push(...geopolitical.map((event: any) => ({
+        sourceType: 'geopolitical',
+        sourceName: event.source,
+        rawData: event,
+        eventTimestamp: event.publishedDate,
+        contentHash: this.generateHash(event.url)
+      })));
+      console.log(`  ✓ Geopolitical: ${geopolitical.length} events`);
+    } catch (error) {
+      console.error('  ✗ Geopolitical intelligence failed:', error);
+    }
+    
+    // Source 8: EARNINGS & M&A (PHASE 6 - NEW!)
+    try {
+      const earningsMA = await earningsMAService.getEarningsAnnouncements();
+      entries.push(...earningsMA.map((announcement: any) => ({
+        sourceType: 'earnings_ma',
+        sourceName: announcement.source,
+        rawData: announcement,
+        eventTimestamp: announcement.publishedDate,
+        contentHash: this.generateHash(announcement.url)
+      })));
+      console.log(`  ✓ Earnings/M&A: ${earningsMA.length} announcements`);
+    } catch (error) {
+      console.error('  ✗ Earnings/M&A failed:', error);
+    }
+    
+    // Source 9: Technical (reduced frequency to save API calls)
     try {
       const topTickers = await this.getTopTickers(3); // Reduced from 5 to 3
       for (const ticker of topTickers) {
@@ -319,6 +351,26 @@ class IntelligentDigestService {
       analysis.sentiment = cryptoIntelligenceService.determineSentiment(`${announcement.title} ${announcement.content}`);
     }
     
+    else if (entry.sourceType === 'geopolitical') {
+      const event = entry.rawData;
+      analysis.relevanceScore = geopoliticalIntelligenceService.calculateRelevance(event);
+      analysis.summary = event.title;
+      analysis.entities.tickers = geopoliticalIntelligenceService.extractRelevantTickers(`${event.title} ${event.content}`);
+      analysis.tags = ['geopolitical', event.category, event.region];
+      analysis.importance = analysis.relevanceScore >= 85 ? 'critical' : 'high';
+      analysis.sentiment = geopoliticalIntelligenceService.determineSentiment(event);
+    }
+    
+    else if (entry.sourceType === 'earnings_ma') {
+      const announcement = entry.rawData;
+      analysis.relevanceScore = earningsMAService.calculateRelevance(announcement);
+      analysis.summary = announcement.title;
+      analysis.entities.tickers = earningsMAService.extractTickers(`${announcement.title} ${announcement.content}`);
+      analysis.tags = ['earnings', announcement.category];
+      analysis.importance = analysis.relevanceScore >= 85 ? 'critical' : 'high';
+      analysis.sentiment = earningsMAService.determineSentiment(announcement);
+    }
+    
     else if (entry.sourceType === 'technical_signal') {
       const tech = entry.rawData;
       analysis.relevanceScore = tech.signals.length * 15;
@@ -400,7 +452,9 @@ class IntelligentDigestService {
       'technical_signal': 14,
       'economic': 180,
       'political': 180,
-      'crypto': 30
+      'crypto': 30,
+      'geopolitical': 90,
+      'earnings_ma': 60
     };
     
     const days = retentionDays[sourceType] || 30;
