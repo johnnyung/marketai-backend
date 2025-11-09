@@ -55,17 +55,18 @@ router.get('/daily/latest', async (req, res) => {
       });
     }
     
+    // JSONB columns are already parsed by PostgreSQL, no need to JSON.parse
     res.json({
       success: true,
       report: {
         date: report.report_date,
         summary: report.executive_summary,
-        topStories: JSON.parse(report.top_stories || '[]'),
-        marketMovers: JSON.parse(report.market_movers || '[]'),
-        geopoliticalAlerts: JSON.parse(report.geopolitical_alerts || '[]'),
-        economicIndicators: JSON.parse(report.economic_indicators || '[]'),
-        cryptoTrends: JSON.parse(report.crypto_trends || '[]'),
-        recommendations: JSON.parse(report.recommendations || '[]'),
+        topStories: report.top_stories || [],
+        marketMovers: report.market_movers || [],
+        geopoliticalAlerts: report.geopolitical_alerts || [],
+        economicIndicators: report.economic_indicators || [],
+        cryptoTrends: report.crypto_trends || [],
+        recommendations: report.recommendations || [],
         generatedAt: report.generated_at
       }
     });
@@ -104,17 +105,18 @@ router.get('/daily/:date', async (req, res) => {
       });
     }
     
+    // JSONB columns are already parsed by PostgreSQL
     res.json({
       success: true,
       report: {
         date: report.report_date,
         summary: report.executive_summary,
-        topStories: JSON.parse(report.top_stories || '[]'),
-        marketMovers: JSON.parse(report.market_movers || '[]'),
-        geopoliticalAlerts: JSON.parse(report.geopolitical_alerts || '[]'),
-        economicIndicators: JSON.parse(report.economic_indicators || '[]'),
-        cryptoTrends: JSON.parse(report.crypto_trends || '[]'),
-        recommendations: JSON.parse(report.recommendations || '[]'),
+        topStories: report.top_stories || [],
+        marketMovers: report.market_movers || [],
+        geopoliticalAlerts: report.geopolitical_alerts || [],
+        economicIndicators: report.economic_indicators || [],
+        cryptoTrends: report.crypto_trends || [],
+        recommendations: report.recommendations || [],
         generatedAt: report.generated_at
       }
     });
@@ -145,16 +147,17 @@ router.get('/daily/recent', async (req, res) => {
     
     const reports = await dailyIntelligenceService.getRecentReports(limit);
     
+    // JSONB columns are already parsed
     res.json({
       success: true,
       count: reports.length,
       reports: reports.map(report => ({
         date: report.report_date,
         summary: report.executive_summary,
-        topStoriesCount: JSON.parse(report.top_stories || '[]').length,
-        marketMoversCount: JSON.parse(report.market_movers || '[]').length,
-        geopoliticalAlertsCount: JSON.parse(report.geopolitical_alerts || '[]').length,
-        recommendations: JSON.parse(report.recommendations || '[]'),
+        topStoriesCount: (report.top_stories || []).length,
+        marketMoversCount: (report.market_movers || []).length,
+        geopoliticalAlertsCount: (report.geopolitical_alerts || []).length,
+        recommendations: report.recommendations || [],
         generatedAt: report.generated_at
       }))
     });
