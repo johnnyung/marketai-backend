@@ -204,6 +204,39 @@ CRITICAL: Your entire response must be ONLY valid JSON, nothing else. No markdow
    * Store report in database
    */
   private async storeReport(report: IntelligenceReport) {
+    // Ensure all data is properly serializable
+    const topStories = report.topStories.map(e => ({
+      summary: e.ai_summary,
+      relevance: e.ai_relevance_score,
+      source: e.source_name,
+      date: e.event_date
+    }));
+    
+    const marketMovers = report.marketMovers.map(e => ({
+      summary: e.ai_summary,
+      tickers: e.ai_entities_tickers,
+      relevance: e.ai_relevance_score,
+      sentiment: e.ai_sentiment
+    }));
+    
+    const geopolitical = report.geopoliticalAlerts.map(e => ({
+      summary: e.ai_summary,
+      source: e.source_name,
+      relevance: e.ai_relevance_score
+    }));
+    
+    const economic = report.economicIndicators.map(e => ({
+      summary: e.ai_summary,
+      source: e.source_name,
+      date: e.event_date
+    }));
+    
+    const crypto = report.cryptoTrends.map(e => ({
+      summary: e.ai_summary,
+      source: e.source_name,
+      relevance: e.ai_relevance_score
+    }));
+    
     await pool.query(`
       INSERT INTO daily_intelligence_reports 
         (report_date, executive_summary, top_stories, market_movers, 
@@ -222,11 +255,11 @@ CRITICAL: Your entire response must be ONLY valid JSON, nothing else. No markdow
     `, [
       report.date.toISOString().split('T')[0], // Date only
       report.summary,
-      JSON.stringify(report.topStories),
-      JSON.stringify(report.marketMovers),
-      JSON.stringify(report.geopoliticalAlerts),
-      JSON.stringify(report.economicIndicators),
-      JSON.stringify(report.cryptoTrends),
+      JSON.stringify(topStories),
+      JSON.stringify(marketMovers),
+      JSON.stringify(geopolitical),
+      JSON.stringify(economic),
+      JSON.stringify(crypto),
       JSON.stringify(report.recommendations)
     ]);
   }
