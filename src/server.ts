@@ -4,6 +4,9 @@ import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
 
+// Services
+import scheduledIngestionService from './services/scheduledIngestionService.js';
+
 // Routes
 import authRoutes from './routes/auth.js';
 import marketRoutes from './routes/market.js';
@@ -21,6 +24,7 @@ import intelligenceRoutes from './routes/intelligence.js';
 import dataRoutes from './routes/data.js';
 import digestRoutes from './routes/digest.js';
 import digestCleanupRoutes from './routes/digestCleanup.js';
+import scheduledIngestionRoutes from './routes/scheduledIngestionRoutes.js';
 
 dotenv.config();
 
@@ -61,6 +65,7 @@ app.use('/api/intelligence', intelligenceRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/digest', digestRoutes);
 app.use('/api/digest', digestCleanupRoutes);
+app.use('/api/digest', scheduledIngestionRoutes);
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -111,13 +116,18 @@ API Endpoints:
   POST /api/ai/chat
 
   📊 Data Intelligence:
-  GET  /api/data/all              - All data sources
-  GET  /api/digest/summary        - Digest statistics
-  POST /api/digest/ingest         - Trigger data collection
-  GET  /api/digest/entries        - Get digest entries
-  GET  /api/digest/quality-report - Data quality report
-  POST /api/digest/cleanup        - Clean bad data
+  GET  /api/data/all                     - All data sources
+  GET  /api/digest/summary               - Digest statistics
+  POST /api/digest/ingest                - Trigger data collection
+  GET  /api/digest/entries               - Get digest entries
+  GET  /api/digest/quality-report        - Data quality report
+  POST /api/digest/cleanup               - Clean bad data
+  GET  /api/digest/scheduler/status      - Scheduler status
+  POST /api/digest/scheduler/trigger     - Manual trigger
   `);
+  
+  // Start scheduled ingestion service
+  scheduledIngestionService.start();
 });
 
 export default app;
