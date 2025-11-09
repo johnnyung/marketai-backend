@@ -20,6 +20,7 @@ import calendarRoutes from './routes/calendar.js';
 import intelligenceRoutes from './routes/intelligence.js';
 import dataRoutes from './routes/data.js';
 import digestRoutes from './routes/digest.js';
+import digestCleanupRoutes from './routes/digestCleanup.js';
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/intelligence', intelligenceRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/digest', digestRoutes);
+app.use('/api/digest', digestCleanupRoutes);
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -113,6 +115,8 @@ API Endpoints:
   GET  /api/digest/summary        - Digest statistics
   POST /api/digest/ingest         - Trigger data collection
   GET  /api/digest/entries        - Get digest entries
+  GET  /api/digest/quality-report - Data quality report
+  POST /api/digest/cleanup        - Clean bad data
   `);
 });
 
