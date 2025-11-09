@@ -26,6 +26,7 @@ import digestRoutes from './routes/digest.js';
 import digestCleanupRoutes from './routes/digestCleanup.js';
 import scheduledIngestionRoutes from './routes/scheduledIngestionRoutes.js';
 import dailyIntelligenceRoutes from './routes/dailyIntelligence.js';
+import tradingOpportunitiesRoutes from './routes/tradingOpportunities.js';
 
 dotenv.config();
 
@@ -64,6 +65,7 @@ app.use('/api/learning', learningRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/intelligence', intelligenceRoutes);
 app.use('/api/intelligence', dailyIntelligenceRoutes);
+app.use('/api/opportunities', tradingOpportunitiesRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/digest', digestRoutes);
 app.use('/api/digest', digestCleanupRoutes);
@@ -132,6 +134,9 @@ API Endpoints:
   GET  /api/intelligence/daily/latest    - Get latest report
   GET  /api/intelligence/daily/:date     - Get report by date
   GET  /api/intelligence/daily/recent    - Get recent reports
+  
+  🎯 AI Trading Signals:
+  GET  /api/opportunities/signals        - Get trading opportunities
   `);
   
   // Start scheduled ingestion service
