@@ -70,6 +70,12 @@ class IntelligentDigestService {
       console.log('🤖 Step 2: AI analyzing and categorizing...');
       for (const entry of rawEntries) {
         try {
+          // Validate date before processing
+          if (!this.isValidDate(entry.eventTimestamp)) {
+            console.log(`  ⚠️ Skipping entry with invalid date from ${entry.sourceName}`);
+            continue;
+          }
+          
           if (await this.isDuplicate(entry.contentHash)) {
             duplicates++;
             continue;
@@ -602,6 +608,36 @@ class IntelligentDigestService {
   
   private generateHash(content: string): string {
     return crypto.createHash('sha256').update(content).digest('hex');
+  }
+  
+  /**
+   * Validate that a date is reasonable (not too old, not in future)
+   */
+  private isValidDate(date: Date): boolean {
+    const now = Date.now();
+    const timestamp = date.getTime();
+    
+    // Reject dates in the future (allow up to 24 hours future for timezone issues)
+    const maxFuture = now + (24 * 60 * 60 * 1000);
+    if (timestamp > maxFuture) {
+      console.log(`  ⚠️ Rejecting future date: ${date.toISOString()}`);
+      return false;
+    }
+    
+    // Reject dates older than 1 year (365 days)
+    const minPast = now - (365 * 24 * 60 * 60 * 1000);
+    if (timestamp < minPast) {
+      console.log(`  ⚠️ Rejecting old date: ${date.toISOString()}`);
+      return false;
+    }
+    
+    // Reject invalid dates
+    if (isNaN(timestamp)) {
+      console.log(`  ⚠️ Rejecting invalid date`);
+      return false;
+    }
+    
+    return true;
   }
   
   private sleep(ms: number): Promise<void> {
