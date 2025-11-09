@@ -9,6 +9,7 @@ import technicalIndicatorsService from './technicalIndicatorsService.js';
 import newsAggregatorService from './newsAggregatorService.js';
 import politicalIntelligenceService from './politicalIntelligenceService.js';
 import economicDataService from './economicDataService.js';
+import cryptoIntelligenceService from './cryptoIntelligenceService.js';
 
 interface DigestEntry {
   sourceType: string;
@@ -186,7 +187,22 @@ class IntelligentDigestService {
       console.error('  ✗ Economic data failed:', error);
     }
     
-    // Source 6: Technical (reduced frequency to save API calls)
+    // Source 6: CRYPTO INTELLIGENCE (PHASE 4 - NEW!)
+    try {
+      const cryptoAnnouncements = await cryptoIntelligenceService.getExchangeAnnouncements();
+      entries.push(...cryptoAnnouncements.map((announcement: any) => ({
+        sourceType: 'crypto',
+        sourceName: announcement.exchange,
+        rawData: announcement,
+        eventTimestamp: announcement.publishedDate,
+        contentHash: this.generateHash(announcement.url)
+      })));
+      console.log(`  ✓ Crypto: ${cryptoAnnouncements.length} announcements`);
+    } catch (error) {
+      console.error('  ✗ Crypto intelligence failed:', error);
+    }
+    
+    // Source 7: Technical (reduced frequency to save API calls)
     try {
       const topTickers = await this.getTopTickers(3); // Reduced from 5 to 3
       for (const ticker of topTickers) {
@@ -292,6 +308,17 @@ class IntelligentDigestService {
       }
     }
     
+    else if (entry.sourceType === 'crypto') {
+      const announcement = entry.rawData;
+      analysis.relevanceScore = cryptoIntelligenceService.calculateRelevance('announcement', announcement);
+      analysis.summary = announcement.title;
+      const symbols = cryptoIntelligenceService.extractCryptoSymbols(`${announcement.title} ${announcement.content}`);
+      analysis.entities.tickers = symbols.slice(0, 5); // Store crypto symbols in tickers field
+      analysis.tags = ['crypto', announcement.category, announcement.exchange];
+      analysis.importance = analysis.relevanceScore >= 75 ? 'high' : 'medium';
+      analysis.sentiment = cryptoIntelligenceService.determineSentiment(`${announcement.title} ${announcement.content}`);
+    }
+    
     else if (entry.sourceType === 'technical_signal') {
       const tech = entry.rawData;
       analysis.relevanceScore = tech.signals.length * 15;
@@ -372,7 +399,8 @@ class IntelligentDigestService {
       'news': 30,
       'technical_signal': 14,
       'economic': 180,
-      'political': 180
+      'political': 180,
+      'crypto': 30
     };
     
     const days = retentionDays[sourceType] || 30;
