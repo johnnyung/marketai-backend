@@ -12,6 +12,9 @@ import economicDataService from './economicDataService.js';
 import cryptoIntelligenceService from './cryptoIntelligenceService.js';
 import geopoliticalIntelligenceService from './geopoliticalIntelligenceService.js';
 import earningsMAService from './earningsMAService.js';
+import manufacturingSupplyChainService from './manufacturingSupplyChainService.js';
+import expandedSocialService from './expandedSocialService.js';
+import localBusinessService from './localBusinessService.js';
 
 interface DigestEntry {
   sourceType: string;
@@ -234,7 +237,57 @@ class IntelligentDigestService {
       console.error('  ✗ Earnings/M&A failed:', error);
     }
     
-    // Source 9: Technical (reduced frequency to save API calls)
+    // Source 9: MANUFACTURING & SUPPLY CHAIN (PHASE 8 - NEW!)
+    try {
+      const manufacturing = await manufacturingSupplyChainService.getManufacturingData();
+      entries.push(...manufacturing.map((data: any) => ({
+        sourceType: 'manufacturing',
+        sourceName: data.source,
+        rawData: data,
+        eventTimestamp: data.publishedDate,
+        contentHash: this.generateHash(data.url)
+      })));
+      console.log(`  ✓ Manufacturing: ${manufacturing.length} updates`);
+    } catch (error) {
+      console.error('  ✗ Manufacturing failed:', error);
+    }
+    
+    // Source 10: EXPANDED SOCIAL (PHASE 9 - NEW!)
+    try {
+      const [hackerNews, redditExpanded] = await Promise.all([
+        expandedSocialService.getHackerNewsStories(),
+        expandedSocialService.getRedditInvestingSentiment()
+      ]);
+      
+      const socialExpanded = [...hackerNews, ...redditExpanded];
+      entries.push(...socialExpanded.map((mention: any) => ({
+        sourceType: 'social',
+        sourceName: mention.source,
+        rawData: mention,
+        eventTimestamp: mention.publishedDate,
+        contentHash: this.generateHash(mention.url)
+      })));
+      console.log(`  ✓ Expanded Social: ${socialExpanded.length} posts`);
+    } catch (error) {
+      console.error('  ✗ Expanded Social failed:', error);
+    }
+    
+    // Source 11: LOCAL BUSINESS (PHASE 10 - NEW!)
+    try {
+      const localBusiness = await localBusinessService.getLocalBusinessNews();
+      entries.push(...localBusiness.map((news: any) => ({
+        sourceType: 'local_business',
+        sourceName: news.source,
+        rawData: news,
+        eventTimestamp: news.publishedDate,
+        contentHash: this.generateHash(news.url)
+      })));
+      console.log(`  ✓ Local Business: ${localBusiness.length} articles`);
+    } catch (error) {
+      console.error('  ✗ Local Business failed:', error);
+    }
+    
+    // Source 12: Technical (reduced frequency to save API calls)
     try {
       const topTickers = await this.getTopTickers(3); // Reduced from 5 to 3
       for (const ticker of topTickers) {
@@ -371,6 +424,36 @@ class IntelligentDigestService {
       analysis.sentiment = earningsMAService.determineSentiment(announcement);
     }
     
+    else if (entry.sourceType === 'manufacturing') {
+      const data = entry.rawData;
+      analysis.relevanceScore = manufacturingSupplyChainService.calculateRelevance(data);
+      analysis.summary = data.title;
+      analysis.entities.tickers = manufacturingSupplyChainService.extractRelevantTickers(`${data.title} ${data.content}`);
+      analysis.tags = ['manufacturing', data.category];
+      analysis.importance = analysis.relevanceScore >= 75 ? 'high' : 'medium';
+      analysis.sentiment = manufacturingSupplyChainService.determineSentiment(data);
+    }
+    
+    else if (entry.sourceType === 'social') {
+      const mention = entry.rawData;
+      analysis.relevanceScore = expandedSocialService.calculateRelevance(mention);
+      analysis.summary = mention.title;
+      analysis.entities.tickers = expandedSocialService.extractTickers(`${mention.title} ${mention.content}`);
+      analysis.tags = ['social', mention.platform];
+      analysis.importance = analysis.relevanceScore >= 60 ? 'medium' : 'low';
+      analysis.sentiment = expandedSocialService.determineSentiment(mention);
+    }
+    
+    else if (entry.sourceType === 'local_business') {
+      const news = entry.rawData;
+      analysis.relevanceScore = localBusinessService.calculateRelevance(news);
+      analysis.summary = news.title;
+      analysis.entities.tickers = localBusinessService.extractTickers(`${news.title} ${news.content}`);
+      analysis.tags = ['local_business', news.city];
+      analysis.importance = analysis.relevanceScore >= 70 ? 'high' : 'medium';
+      analysis.sentiment = localBusinessService.determineSentiment(news);
+    }
+    
     else if (entry.sourceType === 'technical_signal') {
       const tech = entry.rawData;
       analysis.relevanceScore = tech.signals.length * 15;
@@ -447,14 +530,16 @@ class IntelligentDigestService {
     const retentionDays: Record<string, number> = {
       'insider_trade': 90,
       'social_reddit': 7,
-      'social_twitter': 7,
+      'social': 14,
       'news': 30,
       'technical_signal': 14,
       'economic': 180,
       'political': 180,
       'crypto': 30,
       'geopolitical': 90,
-      'earnings_ma': 60
+      'earnings_ma': 60,
+      'manufacturing': 60,
+      'local_business': 45
     };
     
     const days = retentionDays[sourceType] || 30;
