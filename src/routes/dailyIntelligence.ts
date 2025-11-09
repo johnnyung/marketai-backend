@@ -81,6 +81,46 @@ router.get('/daily/latest', async (req, res) => {
 });
 
 /**
+ * Get recent reports (last 7 days by default)
+ * GET /api/intelligence/daily/recent
+ */
+router.get('/daily/recent', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 7;
+    
+    if (limit < 1 || limit > 30) {
+      return res.status(400).json({
+        success: false,
+        error: 'Limit must be between 1 and 30'
+      });
+    }
+    
+    const reports = await dailyIntelligenceService.getRecentReports(limit);
+    
+    res.json({
+      success: true,
+      count: reports.length,
+      reports: reports.map(report => ({
+        date: report.report_date,
+        summary: report.executive_summary,
+        topStoriesCount: (report.top_stories || []).length,
+        marketMoversCount: (report.market_movers || []).length,
+        geopoliticalAlertsCount: (report.geopolitical_alerts || []).length,
+        recommendations: report.recommendations || [],
+        generatedAt: report.generated_at
+      }))
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to get recent reports:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get reports'
+    });
+  }
+});
+
+/**
  * Get report by date
  * GET /api/intelligence/daily/:date (YYYY-MM-DD)
  */
@@ -126,47 +166,6 @@ router.get('/daily/:date', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get report'
-    });
-  }
-});
-
-/**
- * Get recent reports (last 7 days by default)
- * GET /api/intelligence/daily/recent
- */
-router.get('/daily/recent', async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit as string) || 7;
-    
-    if (limit < 1 || limit > 30) {
-      return res.status(400).json({
-        success: false,
-        error: 'Limit must be between 1 and 30'
-      });
-    }
-    
-    const reports = await dailyIntelligenceService.getRecentReports(limit);
-    
-    // JSONB columns are already parsed
-    res.json({
-      success: true,
-      count: reports.length,
-      reports: reports.map(report => ({
-        date: report.report_date,
-        summary: report.executive_summary,
-        topStoriesCount: (report.top_stories || []).length,
-        marketMoversCount: (report.market_movers || []).length,
-        geopoliticalAlertsCount: (report.geopolitical_alerts || []).length,
-        recommendations: report.recommendations || [],
-        generatedAt: report.generated_at
-      }))
-    });
-    
-  } catch (error) {
-    console.error('❌ Failed to get recent reports:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to get reports'
     });
   }
 });
