@@ -1,5 +1,5 @@
 // backend/src/services/intelligentDigestService.ts
-// UPDATED WITH NEWS AGGREGATION
+// COMPLETE VERSION WITH PHASES 1, 2, 3
 
 import { Pool } from 'pg';
 import crypto from 'crypto';
@@ -7,6 +7,8 @@ import secEdgarService from './secEdgarService.js';
 import redditService from './redditService.js';
 import technicalIndicatorsService from './technicalIndicatorsService.js';
 import newsAggregatorService from './newsAggregatorService.js';
+import politicalIntelligenceService from './politicalIntelligenceService.js';
+import economicDataService from './economicDataService.js';
 
 interface DigestEntry {
   sourceType: string;
@@ -139,7 +141,7 @@ class IntelligentDigestService {
       console.error('  ✗ Reddit failed:', error);
     }
     
-    // Source 3: NEWS FEEDS (NEW!)
+    // Source 3: NEWS FEEDS (PHASE 1 - 30 sources)
     try {
       const news = await newsAggregatorService.getRecentNews(24);
       entries.push(...news.map((article: any) => ({
@@ -154,9 +156,39 @@ class IntelligentDigestService {
       console.error('  ✗ News aggregation failed:', error);
     }
     
-    // Source 4: Technical
+    // Source 4: POLITICAL INTELLIGENCE (PHASE 2 - NEW!)
     try {
-      const topTickers = await this.getTopTickers(5);
+      const political = await politicalIntelligenceService.getGovernmentAnnouncements();
+      entries.push(...political.map((announcement: any) => ({
+        sourceType: 'political',
+        sourceName: announcement.source,
+        rawData: announcement,
+        eventTimestamp: announcement.publishedDate,
+        contentHash: this.generateHash(announcement.url)
+      })));
+      console.log(`  ✓ Political: ${political.length} announcements`);
+    } catch (error) {
+      console.error('  ✗ Political intelligence failed:', error);
+    }
+
+    // Source 5: ECONOMIC DATA (PHASE 3 - NEW!)
+    try {
+      const economic = await economicDataService.getEconomicIndicators();
+      entries.push(...economic.map((indicator: any) => ({
+        sourceType: 'economic',
+        sourceName: indicator.source,
+        rawData: indicator,
+        eventTimestamp: indicator.date,
+        contentHash: this.generateHash(`${indicator.source}-${indicator.indicator}-${indicator.date}`)
+      })));
+      console.log(`  ✓ Economic: ${economic.length} indicators`);
+    } catch (error) {
+      console.error('  ✗ Economic data failed:', error);
+    }
+    
+    // Source 6: Technical (reduced frequency to save API calls)
+    try {
+      const topTickers = await this.getTopTickers(3); // Reduced from 5 to 3
       for (const ticker of topTickers) {
         const technical = await technicalIndicatorsService.getTechnicalIndicators(ticker);
         if (technical) {
@@ -227,6 +259,39 @@ class IntelligentDigestService {
       analysis.importance = analysis.relevanceScore >= 70 ? 'high' : 'medium';
     }
     
+    else if (entry.sourceType === 'political') {
+      const announcement = entry.rawData;
+      analysis.relevanceScore = politicalIntelligenceService.calculateRelevance('announcement', announcement);
+      analysis.summary = announcement.title;
+      analysis.entities.tickers = politicalIntelligenceService.extractTickers(announcement.content);
+      analysis.tags = ['political', announcement.category];
+      analysis.importance = analysis.relevanceScore >= 85 ? 'critical' : 'high';
+      
+      const text = `${announcement.title} ${announcement.content}`.toLowerCase();
+      if (text.includes('rate hike') || text.includes('inflation')) {
+        analysis.sentiment = 'bearish';
+      } else if (text.includes('rate cut') || text.includes('stimulus') || text.includes('support')) {
+        analysis.sentiment = 'bullish';
+      }
+    }
+
+    else if (entry.sourceType === 'economic') {
+      const indicator = entry.rawData;
+      analysis.relevanceScore = economicDataService.calculateRelevance(indicator);
+      analysis.summary = `${indicator.indicator}: ${indicator.value}`;
+      analysis.tags = ['economic', indicator.category];
+      analysis.importance = analysis.relevanceScore >= 90 ? 'critical' : 'high';
+      
+      // Interpret economic data
+      if (indicator.changePercent) {
+        if (indicator.changePercent > 0) {
+          analysis.sentiment = 'bullish';
+        } else if (indicator.changePercent < 0) {
+          analysis.sentiment = 'bearish';
+        }
+      }
+    }
+    
     else if (entry.sourceType === 'technical_signal') {
       const tech = entry.rawData;
       analysis.relevanceScore = tech.signals.length * 15;
@@ -295,7 +360,7 @@ class IntelligentDigestService {
       
       return result.rows.map(row => row.ticker);
     } catch (error) {
-      return ['AAPL', 'NVDA', 'TSLA', 'META', 'GOOGL'].slice(0, limit);
+      return ['AAPL', 'NVDA', 'TSLA'].slice(0, limit);
     }
   }
   
@@ -306,8 +371,8 @@ class IntelligentDigestService {
       'social_twitter': 7,
       'news': 30,
       'technical_signal': 14,
-      'economic_data': 180,
-      'political_trade': 180
+      'economic': 180,
+      'political': 180
     };
     
     const days = retentionDays[sourceType] || 30;
