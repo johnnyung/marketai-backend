@@ -17,23 +17,47 @@ class NewsAggregatorService {
   private parser = new xml2js.Parser();
 
   private RSS_FEEDS = [
-    // Reuters - High quality business news
+    // === US FINANCIAL NEWS (Original 6) ===
     { url: 'https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best', name: 'Reuters Business', category: 'news' },
-    
-    // CNBC - Breaking financial news
     { url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html', name: 'CNBC Breaking News', category: 'news' },
-    
-    // MarketWatch - Market news
     { url: 'https://feeds.marketwatch.com/marketwatch/topstories/', name: 'MarketWatch Top Stories', category: 'news' },
-    
-    // Yahoo Finance - Business news
     { url: 'https://finance.yahoo.com/news/rssindex', name: 'Yahoo Finance', category: 'news' },
-    
-    // Seeking Alpha - Market analysis
     { url: 'https://seekingalpha.com/feed.xml', name: 'Seeking Alpha', category: 'news' },
-    
-    // Benzinga - Trading news
     { url: 'https://www.benzinga.com/feed', name: 'Benzinga', category: 'news' },
+    
+    // === GLOBAL NEWS (7 new) ===
+    { url: 'https://feeds.bbci.co.uk/news/world/rss.xml', name: 'BBC World News', category: 'global' },
+    { url: 'https://www.aljazeera.com/xml/rss/all.xml', name: 'Al Jazeera', category: 'global' },
+    { url: 'https://rss.dw.com/xml/rss-en-all', name: 'Deutsche Welle', category: 'global' },
+    { url: 'https://www.france24.com/en/rss', name: 'France 24', category: 'global' },
+    { url: 'https://www.scmp.com/rss/91/feed', name: 'South China Morning Post', category: 'global' },
+    { url: 'https://asia.nikkei.com/rss/feed/nar', name: 'Nikkei Asia', category: 'global' },
+    { url: 'https://www.economist.com/business/rss.xml', name: 'The Economist Business', category: 'global' },
+    
+    // === US BUSINESS NEWS (5 new) ===
+    { url: 'https://www.ft.com/?format=rss', name: 'Financial Times', category: 'business' },
+    { url: 'https://www.wsj.com/xml/rss/3_7085.xml', name: 'Wall Street Journal Markets', category: 'business' },
+    { url: 'https://www.forbes.com/business/feed/', name: 'Forbes Business', category: 'business' },
+    { url: 'https://feeds.businessinsider.com/custom/all', name: 'Business Insider', category: 'business' },
+    { url: 'https://www.thestreet.com/feeds/stocks.xml', name: 'TheStreet', category: 'business' },
+    
+    // === TECH NEWS (5 new) ===
+    { url: 'https://techcrunch.com/feed/', name: 'TechCrunch', category: 'tech' },
+    { url: 'https://www.theverge.com/rss/index.xml', name: 'The Verge', category: 'tech' },
+    { url: 'http://feeds.arstechnica.com/arstechnica/technology-lab', name: 'Ars Technica', category: 'tech' },
+    { url: 'https://feeds.feedburner.com/venturebeat/SZYF', name: 'VentureBeat', category: 'tech' },
+    { url: 'https://www.wired.com/feed/rss', name: 'Wired', category: 'tech' },
+    
+    // === CRYPTO NEWS (4 new) ===
+    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', name: 'CoinDesk', category: 'crypto' },
+    { url: 'https://cointelegraph.com/rss', name: 'Cointelegraph', category: 'crypto' },
+    { url: 'https://www.theblock.co/rss.xml', name: 'The Block', category: 'crypto' },
+    { url: 'https://decrypt.co/feed', name: 'Decrypt', category: 'crypto' },
+    
+    // === ADDITIONAL QUALITY SOURCES (3 new) ===
+    { url: 'https://www.fool.com/feeds/index.aspx', name: 'Motley Fool', category: 'investing' },
+    { url: 'https://www.investing.com/rss/news.rss', name: 'Investing.com', category: 'investing' },
+    { url: 'https://www.barrons.com/articles/rss', name: 'Barrons', category: 'investing' },
   ];
 
   /**
@@ -189,35 +213,90 @@ class NewsAggregatorService {
 
     const text = `${item.title} ${item.description}`.toLowerCase();
     
-    // High-value keywords boost score
+    // === CRITICAL KEYWORDS (Market Moving) ===
+    const criticalKeywords = [
+      'earnings beat', 'earnings miss', 'acquisition', 'merger', 'buyout', 
+      'bankruptcy', 'default', 'sec investigation', 'lawsuit settlement',
+      'fda approval', 'breakthrough', 'layoffs', 'shutdown', 'recall'
+    ];
+    
+    // === HIGH-VALUE KEYWORDS ===
     const highValueKeywords = [
-      'earnings', 'merger', 'acquisition', 'buyout', 'ipo', 'dividend',
+      'earnings', 'merger', 'acquisition', 'ipo', 'dividend', 'split',
       'sec', 'investigation', 'lawsuit', 'settlement', 'bankruptcy',
-      'breakthrough', 'approval', 'fda', 'deal', 'contract',
-      'beats estimates', 'misses estimates', 'guidance', 'outlook'
+      'approval', 'fda', 'deal', 'contract', 'guidance', 'outlook',
+      'revenue', 'profit', 'loss', 'debt', 'restructuring'
     ];
 
+    // === MARKET MOVERS ===
     const marketMovers = [
-      'surges', 'plunges', 'rallies', 'crashes', 'soars', 'tumbles'
+      'surges', 'soars', 'rallies', 'jumps', 'skyrockets',
+      'plunges', 'crashes', 'tumbles', 'tanks', 'collapses'
+    ];
+    
+    // === GEOPOLITICAL KEYWORDS ===
+    const geopoliticalKeywords = [
+      'war', 'conflict', 'sanctions', 'treaty', 'trade war', 'tariff',
+      'election', 'coup', 'crisis', 'invasion', 'peace deal'
+    ];
+    
+    // === CRYPTO KEYWORDS ===
+    const cryptoKeywords = [
+      'bitcoin', 'ethereum', 'crypto', 'blockchain', 'defi', 'nft',
+      'sec approval', 'etf', 'halving', 'hard fork'
+    ];
+    
+    // === TECH KEYWORDS ===
+    const techKeywords = [
+      'ai', 'artificial intelligence', 'machine learning', 'chatgpt',
+      'quantum', 'semiconductor', 'chip', 'breakthrough', '5g', '6g'
     ];
 
+    // Check critical keywords (+20 each)
+    for (const keyword of criticalKeywords) {
+      if (text.includes(keyword)) score += 20;
+    }
+
+    // Check high-value keywords (+10 each)
     for (const keyword of highValueKeywords) {
       if (text.includes(keyword)) score += 10;
     }
 
+    // Check market movers (+8 each)
     for (const mover of marketMovers) {
-      if (text.includes(mover)) score += 5;
+      if (text.includes(mover)) score += 8;
+    }
+    
+    // Check geopolitical keywords (+12 each)
+    for (const keyword of geopoliticalKeywords) {
+      if (text.includes(keyword)) score += 12;
+    }
+    
+    // Check crypto keywords (+8 each)
+    for (const keyword of cryptoKeywords) {
+      if (text.includes(keyword)) score += 8;
+    }
+    
+    // Check tech keywords (+8 each)
+    for (const keyword of techKeywords) {
+      if (text.includes(keyword)) score += 8;
     }
 
-    // Recency bonus
+    // === RECENCY BONUS ===
     const hoursOld = (Date.now() - item.pubDate.getTime()) / (1000 * 60 * 60);
-    if (hoursOld < 1) score += 15;
-    else if (hoursOld < 6) score += 10;
-    else if (hoursOld < 24) score += 5;
+    if (hoursOld < 1) score += 15;      // Last hour
+    else if (hoursOld < 6) score += 10; // Last 6 hours
+    else if (hoursOld < 24) score += 5; // Last 24 hours
 
-    // Title mentions ticker directly
+    // === TICKER MENTION BONUS ===
     const tickers = this.extractTickers(item.title);
     if (tickers.length > 0) score += 10;
+    if (tickers.length > 2) score += 5; // Multiple tickers
+
+    // === CATEGORY BONUSES ===
+    if (item.category === 'global') score += 5;
+    if (item.category === 'crypto') score += 5;
+    if (item.category === 'tech') score += 5;
 
     return Math.min(100, score);
   }
