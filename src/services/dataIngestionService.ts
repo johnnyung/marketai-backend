@@ -1,17 +1,12 @@
 // src/services/dataIngestionService.ts
 // COMPLETE DATA ENGINE: All news, political trades, insider activity, social sentiment
 // PHASE 7: Added institutional, enhanced political, and technical analysis
-// PHASE 8: Added crypto, earnings, macro, and enhanced social intelligence
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import institutionalIntelligence from './institutionalIntelligence.js';
 import enhancedPoliticalIntelligence from './enhancedPoliticalIntelligence.js';
 import technicalAnalysis from './technicalAnalysis.js';
-import cryptoIntelligence from './cryptoIntelligence.js';
-import earningsIntelligence from './earningsIntelligence.js';
-import macroIntelligence from './macroIntelligence.js';
-import enhancedSocial from './enhancedSocial.js';
 
 interface DataSource {
   name: string;
@@ -60,15 +55,14 @@ class DataIngestionService {
   /**
    * MASTER INGESTION: Pull all data from all sources
    * PHASE 7: Now includes institutional, enhanced political, and technical analysis
-   * PHASE 8: Now includes crypto, earnings, macro, and enhanced social intelligence
    */
   async ingestAll(): Promise<DataItem[]> {
-    console.log('🔄 Starting complete data ingestion (Phase 5 + 7 + 8)...');
+    console.log('🔄 Starting complete data ingestion (Phase 5 + Phase 7)...');
     
     const allData: DataItem[] = [];
     const promises = [];
 
-    // PHASE 5 SOURCES (Core 5)
+    // PHASE 5 SOURCES
     // Political trades (basic)
     promises.push(this.fetchPoliticalTrades());
     
@@ -84,7 +78,7 @@ class DataIngestionService {
     // Economic events
     promises.push(this.fetchEconomicCalendar());
     
-    // PHASE 7 SOURCES (Advanced intelligence)
+    // PHASE 7 SOURCES (NEW!)
     // Institutional intelligence (13F filings, whale trades, short interest)
     if (process.env.ENABLE_INSTITUTIONAL !== 'false') {
       promises.push(institutionalIntelligence.fetchAll());
@@ -100,27 +94,6 @@ class DataIngestionService {
       promises.push(technicalAnalysis.fetchAll());
     }
     
-    // PHASE 8 SOURCES (Market context)
-    // Crypto intelligence (whale wallets, exchange flows, sentiment)
-    if (process.env.ENABLE_CRYPTO !== 'false') {
-      promises.push(cryptoIntelligence.fetchAll());
-    }
-    
-    // Earnings intelligence (calendar, estimates, surprises, patterns)
-    if (process.env.ENABLE_EARNINGS !== 'false') {
-      promises.push(earningsIntelligence.fetchAll());
-    }
-    
-    // Macro intelligence (Fed, yields, dollar, commodities, global markets)
-    if (process.env.ENABLE_MACRO !== 'false') {
-      promises.push(macroIntelligence.fetchAll());
-    }
-    
-    // Enhanced social (Twitter/X, StockTwits, Discord)
-    if (process.env.ENABLE_ENHANCED_SOCIAL !== 'false') {
-      promises.push(enhancedSocial.fetchAll());
-    }
-    
     try {
       const results = await Promise.allSettled(promises);
       
@@ -133,7 +106,7 @@ class DataIngestionService {
         }
       });
       
-      console.log(`✅ Total data ingested: ${allData.length} items (Phase 5 + 7 + 8)`);
+      console.log(`✅ Total data ingested: ${allData.length} items (Phase 5 + 7)`);
       return allData;
       
     } catch (error: any) {
@@ -319,11 +292,42 @@ class DataIngestionService {
       }
     }
     
-    // 2. Financial RSS Feeds
+    // 2. Financial RSS Feeds - EXPANDED WITH YAHOO FINANCE
     const rssFeeds = [
+      // Major News Outlets
       'https://feeds.reuters.com/reuters/businessNews',
       'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-      'https://www.bloomberg.com/feed/podcast/etf-report.xml'
+      
+      // Yahoo Finance - Comprehensive Coverage
+      'https://finance.yahoo.com/news/rssindex',
+      'https://finance.yahoo.com/news/rss/technology',
+      'https://finance.yahoo.com/news/rss/healthcare',
+      'https://finance.yahoo.com/news/rss/industrials',  
+      'https://finance.yahoo.com/news/rss/energy',
+      'https://finance.yahoo.com/news/rss/financials',
+      
+      // Yahoo Finance - Ticker-Specific (Hot Stocks)
+      'https://finance.yahoo.com/rss/headline?s=ACHR',    // Archer Aviation
+      'https://finance.yahoo.com/rss/headline?s=JOBY',    // Joby Aviation
+      'https://finance.yahoo.com/rss/headline?s=LILM',    // Lilium
+      'https://finance.yahoo.com/rss/headline?s=PLTR',    // Palantir
+      'https://finance.yahoo.com/rss/headline?s=TSLA',    // Tesla
+      'https://finance.yahoo.com/rss/headline?s=NVDA',    // NVIDIA
+      'https://finance.yahoo.com/rss/headline?s=RIVN',    // Rivian
+      'https://finance.yahoo.com/rss/headline?s=LCID',    // Lucid
+      
+      // MarketWatch
+      'https://www.marketwatch.com/rss/topstories',
+      'https://www.marketwatch.com/rss/realtimeheadlines',
+      
+      // Seeking Alpha
+      'https://seekingalpha.com/feed.xml',
+      
+      // Benzinga
+      'https://www.benzinga.com/feed',
+      
+      // Financial Times
+      'https://www.ft.com/rss/home'
     ];
     
     for (const feed of rssFeeds) {

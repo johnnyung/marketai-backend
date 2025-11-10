@@ -4,8 +4,11 @@ import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
 
+
 // Services
 import scheduledIngestionService from './services/scheduledIngestionService.js';
+import intelligenceThreadsRoutes from './routes/intelligenceThreadsRoutes.js';
+
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -27,6 +30,11 @@ import digestCleanupRoutes from './routes/digestCleanup.js';
 import scheduledIngestionRoutes from './routes/scheduledIngestionRoutes.js';
 import dailyIntelligenceRoutes from './routes/dailyIntelligence.js';
 import tradingOpportunitiesRoutes from './routes/tradingOpportunities.js';
+import aiTipTrackerRoutes from './routes/aiTipTrackerRoutes.js';
+import deepDiveRoutes from './routes/deepDiveRoutes.js'; // ADD THIS LINE
+import executiveSummaryRoutes from './routes/executiveSummaryRoutes.js';
+import tickerVettingRoutes from './routes/tickerVettingRoutes.js';
+import cacheRoutes from './routes/cacheRoutes.js';
 
 dotenv.config();
 
@@ -70,6 +78,12 @@ app.use('/api/data', dataRoutes);
 app.use('/api/digest', digestRoutes);
 app.use('/api/digest', digestCleanupRoutes);
 app.use('/api/digest', scheduledIngestionRoutes);
+app.use('/api/ai-tip-tracker', aiTipTrackerRoutes);
+app.use('/api/deep-dive', deepDiveRoutes); // ADD THIS LINE
+app.use('/api/threads', intelligenceThreadsRoutes);
+app.use('/api/intelligence', executiveSummaryRoutes);
+app.use('/api/vetting', tickerVettingRoutes);
+app.use('/api/cache', cacheRoutes);
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -137,6 +151,20 @@ API Endpoints:
   
   🎯 AI Trading Signals:
   GET  /api/opportunities/signals        - Get trading opportunities
+  
+  💰 AI Tip Tracker:
+  GET  /api/ai-tip-tracker/summary       - Performance summary
+  GET  /api/ai-tip-tracker/positions/open - Open positions
+  GET  /api/ai-tip-tracker/positions/closed - Closed positions
+  POST /api/ai-tip-tracker/position      - Create tracked position
+  POST /api/ai-tip-tracker/update-all    - Update all positions
+  
+  🔬 Deep Dive Analysis:
+  GET  /api/deep-dive/ticker-of-day      - Comprehensive ticker analysis
+  GET  /api/deep-dive/pattern-watch      - Historical pattern matching
+  GET  /api/deep-dive/risk-monitor       - Market risk assessment
+  GET  /api/deep-dive/political-intel    - Political intelligence briefing
+  GET  /api/deep-dive/all                - All analyses at once
   `);
   
   // Start scheduled ingestion service
