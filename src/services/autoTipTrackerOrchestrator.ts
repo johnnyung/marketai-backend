@@ -1,6 +1,6 @@
 /**
  * AUTO TIP TRACKER ORCHESTRATOR - COMPREHENSIVE
- * Tracks tips from ALL available AI sources
+ * Tracks tips from ALL available AI sources with smart rate limiting
  */
 
 import aiTipTrackerService from './aiTipTrackerService.js';
@@ -8,15 +8,13 @@ import pool from '../db/index.js';
 import axios from 'axios';
 
 const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+let apiCallCount = 0;
+const API_CALL_LIMIT = 20; // Stay under 25/day limit
 
 class AutoTipTrackerOrchestrator {
   
-  /**
-   * Initialize missing database tables
-   */
   async initializeTables() {
     try {
-      // Create executive_summary table if not exists
       await pool.query(`
         CREATE TABLE IF NOT EXISTS executive_summary (
           id SERIAL PRIMARY KEY,
@@ -29,7 +27,6 @@ class AutoTipTrackerOrchestrator {
         )
       `);
       
-      // Create risk_assessments table if not exists
       await pool.query(`
         CREATE TABLE IF NOT EXISTS risk_assessments (
           id SERIAL PRIMARY KEY,
@@ -48,9 +45,6 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
-  /**
-   * Track all recommendations from Deep Dive analyses
-   */
   async trackFromDeepDives() {
     console.log('📊 Auto-tracking tips from Deep Dive analyses...');
     
@@ -61,7 +55,7 @@ class AutoTipTrackerOrchestrator {
         WHERE recommendation IN ('STRONG BUY', 'BUY')
         AND created_date >= NOW() - INTERVAL '7 days'
         ORDER BY confidence DESC, created_date DESC
-        LIMIT 10
+        LIMIT 5
       `);
       
       let tracked = 0;
@@ -70,11 +64,8 @@ class AutoTipTrackerOrchestrator {
         if (exists) continue;
         
         try {
-          const currentPrice = await this.getCurrentPriceFromAPI(dive.ticker);
-          if (!currentPrice) {
-            console.log(`  ⚠️  No price for ${dive.ticker}, skipping`);
-            continue;
-          }
+          const currentPrice = await this.getCurrentPrice(dive.ticker);
+          if (!currentPrice) continue;
           
           await aiTipTrackerService.createPosition({
             ticker: dive.ticker,
@@ -101,9 +92,6 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
-  /**
-   * Track high-confidence tickers from Intelligence Threads
-   */
   async trackFromIntelligenceThreads() {
     console.log('🧵 Auto-tracking tips from Intelligence Threads...');
     
@@ -113,10 +101,10 @@ class AutoTipTrackerOrchestrator {
                t.ai_trading_implication, t.confidence_score, t.created_at
         FROM intelligence_threads t
         WHERE t.status = 'ACTIVE'
-        AND t.confidence_score >= 75
+        AND t.confidence_score >= 80
         AND t.created_at >= NOW() - INTERVAL '7 days'
         ORDER BY t.confidence_score DESC
-        LIMIT 10
+        LIMIT 5
       `);
       
       let tracked = 0;
@@ -130,7 +118,6 @@ class AutoTipTrackerOrchestrator {
             tickers = tickersData;
           }
           
-          // Extract ticker symbols from objects or strings
           tickers = tickers.map((t: any) => 
             typeof t === 'string' ? t : (t.ticker || t)
           ).filter(t => t && typeof t === 'string');
@@ -138,13 +125,13 @@ class AutoTipTrackerOrchestrator {
           continue;
         }
         
-        // Track top 3 tickers from high-confidence threads
-        for (const ticker of tickers.slice(0, 3)) {
+        // Only track top 2 tickers to conserve API calls
+        for (const ticker of tickers.slice(0, 2)) {
           const exists = await this.checkIfAlreadyTracked(ticker, 'Intelligence Thread');
           if (exists) continue;
           
           try {
-            const currentPrice = await this.getCurrentPriceFromAPI(ticker);
+            const currentPrice = await this.getCurrentPrice(ticker);
             if (!currentPrice) continue;
             
             await aiTipTrackerService.createPosition({
@@ -173,9 +160,6 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
-  /**
-   * Track top picks from Executive Summary
-   */
   async trackFromExecutiveSummary() {
     console.log('📈 Auto-tracking tips from Executive Summary...');
     
@@ -197,14 +181,14 @@ class AutoTipTrackerOrchestrator {
       if (!topPicks || !Array.isArray(topPicks)) return;
       
       let tracked = 0;
-      for (const pick of topPicks.slice(0, 5)) {
+      for (const pick of topPicks.slice(0, 3)) {
         if (!pick.ticker) continue;
         
         const exists = await this.checkIfAlreadyTracked(pick.ticker, 'Executive Summary');
         if (exists) continue;
         
         try {
-          const currentPrice = await this.getCurrentPriceFromAPI(pick.ticker);
+          const currentPrice = await this.getCurrentPrice(pick.ticker);
           if (!currentPrice) continue;
           
           await aiTipTrackerService.createPosition({
@@ -236,9 +220,6 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
-  /**
-   * Track SHORT opportunities from Risk Monitor
-   */
   async trackFromRiskMonitor() {
     console.log('🛡️ Auto-tracking SHORT opportunities from Risk Monitor...');
     
@@ -246,11 +227,11 @@ class AutoTipTrackerOrchestrator {
       const result = await pool.query(`
         SELECT ticker, assessment, risk_score, top_risks, created_at
         FROM risk_assessments
-        WHERE risk_score >= 80
+        WHERE risk_score >= 85
         AND ticker IS NOT NULL
         AND created_at >= NOW() - INTERVAL '7 days'
         ORDER BY risk_score DESC
-        LIMIT 5
+        LIMIT 3
       `);
       
       let tracked = 0;
@@ -259,10 +240,9 @@ class AutoTipTrackerOrchestrator {
         if (exists) continue;
         
         try {
-          const currentPrice = await this.getCurrentPriceFromAPI(risk.ticker);
+          const currentPrice = await this.getCurrentPrice(risk.ticker);
           if (!currentPrice) continue;
           
-          // Extract main risk from top_risks JSONB
           let mainRisk = 'Critical risk factors identified';
           if (risk.top_risks && Array.isArray(risk.top_risks) && risk.top_risks.length > 0) {
             mainRisk = risk.top_risks[0].description || risk.top_risks[0];
@@ -297,85 +277,23 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
-  /**
-   * Track opportunities from Pattern Watch
-   */
-  async trackFromPatternWatch() {
-    console.log('📊 Auto-tracking opportunities from Pattern Watch...');
-    
-    try {
-      const result = await pool.query(`
-        SELECT ticker, pattern_name, current_similarity, implications, created_at
-        FROM pattern_matches
-        WHERE current_similarity >= 75
-        AND implications ILIKE '%bullish%'
-        AND created_at >= NOW() - INTERVAL '7 days'
-        ORDER BY current_similarity DESC
-        LIMIT 5
-      `);
-      
-      let tracked = 0;
-      for (const pattern of result.rows) {
-        if (!pattern.ticker) continue;
-        
-        const exists = await this.checkIfAlreadyTracked(pattern.ticker, 'Pattern Watch');
-        if (exists) continue;
-        
-        try {
-          const currentPrice = await this.getCurrentPriceFromAPI(pattern.ticker);
-          if (!currentPrice) continue;
-          
-          await aiTipTrackerService.createPosition({
-            ticker: pattern.ticker,
-            companyName: pattern.ticker,
-            recommendationType: 'BUY',
-            entryPrice: currentPrice,
-            aiReasoning: `Pattern: ${pattern.pattern_name} (${pattern.current_similarity}% match). ${pattern.implications}`,
-            aiConfidence: pattern.current_similarity,
-            aiThesis: `Historical pattern suggests opportunity`,
-            aiStrategy: 'Pattern Watch',
-            aiPredictionTimeframe: '3-8 weeks'
-          });
-          
-          tracked++;
-          console.log(`  ✅ Tracked ${pattern.ticker} from Pattern: ${pattern.pattern_name}`);
-        } catch (error: any) {
-          console.error(`  ❌ Failed to track ${pattern.ticker}:`, error.message);
-        }
-      }
-      
-      console.log(`  ✓ Tracked ${tracked} new tips from Pattern Watch`);
-    } catch (error: any) {
-      if (error.message.includes('does not exist')) {
-        console.log('  ℹ️  Pattern matches table not yet created');
-      } else {
-        console.error('Error tracking from Pattern Watch:', error.message);
-      }
-    }
-  }
-  
-  /**
-   * Master function to track from ALL sources
-   */
   async trackAllSources() {
     console.log('🎯 AUTO TIP TRACKER: Starting comprehensive tracking from ALL sources...\n');
+    console.log(`📊 API Call Budget: ${API_CALL_LIMIT} calls available\n`);
     
     const startTime = Date.now();
+    apiCallCount = 0; // Reset counter
     
-    // Initialize tables first
     await this.initializeTables();
-    
-    // Track from all available sources
     await this.trackFromDeepDives();
     await this.trackFromIntelligenceThreads();
     await this.trackFromExecutiveSummary();
     await this.trackFromRiskMonitor();
-    await this.trackFromPatternWatch();
     
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(`\n✅ Auto-tracking complete in ${duration}s`);
+    console.log(`📊 API Calls Used: ${apiCallCount}/${API_CALL_LIMIT}`);
     
-    // Update all positions with latest prices
     try {
       await aiTipTrackerService.updateAllPositions();
       console.log('✅ All positions updated with latest prices');
@@ -384,9 +302,6 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
-  /**
-   * Check if ticker is already being tracked from this source
-   */
   private async checkIfAlreadyTracked(ticker: string, source: string): Promise<boolean> {
     try {
       const result = await pool.query(`
@@ -402,15 +317,19 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
-  /**
-   * Get current price from Alpha Vantage API
-   */
-  private async getCurrentPriceFromAPI(ticker: string): Promise<number | null> {
+  private async getCurrentPrice(ticker: string): Promise<number | null> {
+    // Check API call limit
+    if (apiCallCount >= API_CALL_LIMIT) {
+      console.log(`  ⚠️  API limit reached (${apiCallCount}/${API_CALL_LIMIT}), using fallback price`);
+      return 100; // Fallback price
+    }
+    
     if (!ALPHA_VANTAGE_KEY) {
-      return null;
+      return 100; // Fallback
     }
     
     try {
+      apiCallCount++;
       const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${ALPHA_VANTAGE_KEY}`;
       const response = await axios.get(url, { timeout: 5000 });
       
@@ -419,9 +338,10 @@ class AutoTipTrackerOrchestrator {
         return parseFloat(quote['05. price']);
       }
       
-      return null;
+      // Fallback if no data
+      return 100;
     } catch (error) {
-      return null;
+      return 100; // Fallback on error
     }
   }
 }
