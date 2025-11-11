@@ -1,6 +1,6 @@
 /**
- * AUTO TIP TRACKER ORCHESTRATOR - SIMPLIFIED
- * Tracks tips from available sources only
+ * AUTO TIP TRACKER ORCHESTRATOR - COMPREHENSIVE
+ * Tracks tips from ALL available AI sources
  */
 
 import aiTipTrackerService from './aiTipTrackerService.js';
@@ -11,6 +11,46 @@ const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
 class AutoTipTrackerOrchestrator {
   
+  /**
+   * Initialize missing database tables
+   */
+  async initializeTables() {
+    try {
+      // Create executive_summary table if not exists
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS executive_summary (
+          id SERIAL PRIMARY KEY,
+          top_ai_picks JSONB,
+          key_catalysts TEXT[],
+          risk_factors TEXT[],
+          market_sentiment VARCHAR(20),
+          outlook TEXT,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      
+      // Create risk_assessments table if not exists
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS risk_assessments (
+          id SERIAL PRIMARY KEY,
+          ticker VARCHAR(10),
+          assessment TEXT,
+          risk_score INTEGER,
+          top_risks JSONB,
+          recommendations TEXT[],
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      
+      console.log('✅ Database tables initialized');
+    } catch (error: any) {
+      console.error('Error initializing tables:', error.message);
+    }
+  }
+  
+  /**
+   * Track all recommendations from Deep Dive analyses
+   */
   async trackFromDeepDives() {
     console.log('📊 Auto-tracking tips from Deep Dive analyses...');
     
@@ -49,7 +89,7 @@ class AutoTipTrackerOrchestrator {
           });
           
           tracked++;
-          console.log(`  ✅ Tracked ${dive.ticker} from Deep Dive`);
+          console.log(`  ✅ Tracked ${dive.ticker} from Deep Dive (${dive.recommendation})`);
         } catch (error: any) {
           console.error(`  ❌ Failed to track ${dive.ticker}:`, error.message);
         }
@@ -61,6 +101,9 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
+  /**
+   * Track high-confidence tickers from Intelligence Threads
+   */
   async trackFromIntelligenceThreads() {
     console.log('🧵 Auto-tracking tips from Intelligence Threads...');
     
@@ -73,7 +116,7 @@ class AutoTipTrackerOrchestrator {
         AND t.confidence_score >= 75
         AND t.created_at >= NOW() - INTERVAL '7 days'
         ORDER BY t.confidence_score DESC
-        LIMIT 5
+        LIMIT 10
       `);
       
       let tracked = 0;
@@ -87,6 +130,7 @@ class AutoTipTrackerOrchestrator {
             tickers = tickersData;
           }
           
+          // Extract ticker symbols from objects or strings
           tickers = tickers.map((t: any) => 
             typeof t === 'string' ? t : (t.ticker || t)
           ).filter(t => t && typeof t === 'string');
@@ -94,7 +138,8 @@ class AutoTipTrackerOrchestrator {
           continue;
         }
         
-        for (const ticker of tickers.slice(0, 2)) {
+        // Track top 3 tickers from high-confidence threads
+        for (const ticker of tickers.slice(0, 3)) {
           const exists = await this.checkIfAlreadyTracked(ticker, 'Intelligence Thread');
           if (exists) continue;
           
@@ -107,7 +152,7 @@ class AutoTipTrackerOrchestrator {
               companyName: ticker,
               recommendationType: 'BUY',
               entryPrice: currentPrice,
-              aiReasoning: `Thread: ${thread.title}. ${thread.ai_trading_implication || ''}`,
+              aiReasoning: `Thread: ${thread.title}. ${thread.ai_trading_implication || 'High-confidence intelligence signal'}`,
               aiConfidence: thread.confidence_score,
               aiThesis: thread.ai_insight || 'Intelligence thread opportunity',
               aiStrategy: 'Intelligence Thread',
@@ -115,7 +160,7 @@ class AutoTipTrackerOrchestrator {
             });
             
             tracked++;
-            console.log(`  ✅ Tracked ${ticker} from Thread: ${thread.title}`);
+            console.log(`  ✅ Tracked ${ticker} from Thread: ${thread.title.substring(0, 50)}...`);
           } catch (error: any) {
             console.error(`  ❌ Failed to track ${ticker}:`, error.message);
           }
@@ -128,17 +173,209 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
+  /**
+   * Track top picks from Executive Summary
+   */
+  async trackFromExecutiveSummary() {
+    console.log('📈 Auto-tracking tips from Executive Summary...');
+    
+    try {
+      const result = await pool.query(`
+        SELECT top_ai_picks, created_at
+        FROM executive_summary
+        WHERE created_at >= NOW() - INTERVAL '2 days'
+        ORDER BY created_at DESC
+        LIMIT 1
+      `);
+      
+      if (result.rows.length === 0) {
+        console.log('  ℹ️  No recent executive summary found');
+        return;
+      }
+      
+      const topPicks = result.rows[0].top_ai_picks;
+      if (!topPicks || !Array.isArray(topPicks)) return;
+      
+      let tracked = 0;
+      for (const pick of topPicks.slice(0, 5)) {
+        if (!pick.ticker) continue;
+        
+        const exists = await this.checkIfAlreadyTracked(pick.ticker, 'Executive Summary');
+        if (exists) continue;
+        
+        try {
+          const currentPrice = await this.getCurrentPriceFromAPI(pick.ticker);
+          if (!currentPrice) continue;
+          
+          await aiTipTrackerService.createPosition({
+            ticker: pick.ticker,
+            companyName: pick.company || pick.ticker,
+            recommendationType: 'BUY',
+            entryPrice: currentPrice,
+            aiReasoning: `Executive Summary Top Pick: ${pick.reasoning || pick.catalyst || 'High-priority opportunity'}`,
+            aiConfidence: pick.confidence || 85,
+            aiThesis: pick.reasoning || 'Executive summary recommendation',
+            aiStrategy: 'Executive Summary',
+            aiPredictionTimeframe: '1-3 months'
+          });
+          
+          tracked++;
+          console.log(`  ✅ Tracked ${pick.ticker} from Executive Summary`);
+        } catch (error: any) {
+          console.error(`  ❌ Failed to track ${pick.ticker}:`, error.message);
+        }
+      }
+      
+      console.log(`  ✓ Tracked ${tracked} new tips from Executive Summary`);
+    } catch (error: any) {
+      if (error.message.includes('does not exist')) {
+        console.log('  ℹ️  Executive summary table not yet created');
+      } else {
+        console.error('Error tracking from Executive Summary:', error.message);
+      }
+    }
+  }
+  
+  /**
+   * Track SHORT opportunities from Risk Monitor
+   */
+  async trackFromRiskMonitor() {
+    console.log('🛡️ Auto-tracking SHORT opportunities from Risk Monitor...');
+    
+    try {
+      const result = await pool.query(`
+        SELECT ticker, assessment, risk_score, top_risks, created_at
+        FROM risk_assessments
+        WHERE risk_score >= 80
+        AND ticker IS NOT NULL
+        AND created_at >= NOW() - INTERVAL '7 days'
+        ORDER BY risk_score DESC
+        LIMIT 5
+      `);
+      
+      let tracked = 0;
+      for (const risk of result.rows) {
+        const exists = await this.checkIfAlreadyTracked(risk.ticker, 'Risk Monitor SHORT');
+        if (exists) continue;
+        
+        try {
+          const currentPrice = await this.getCurrentPriceFromAPI(risk.ticker);
+          if (!currentPrice) continue;
+          
+          // Extract main risk from top_risks JSONB
+          let mainRisk = 'Critical risk factors identified';
+          if (risk.top_risks && Array.isArray(risk.top_risks) && risk.top_risks.length > 0) {
+            mainRisk = risk.top_risks[0].description || risk.top_risks[0];
+          }
+          
+          await aiTipTrackerService.createPosition({
+            ticker: risk.ticker,
+            companyName: risk.ticker,
+            recommendationType: 'SHORT',
+            entryPrice: currentPrice,
+            aiReasoning: `Risk Monitor Alert (Score: ${risk.risk_score}/100): ${mainRisk}`,
+            aiConfidence: risk.risk_score,
+            aiThesis: risk.assessment || 'High-risk assessment indicates downside',
+            aiStrategy: 'Risk Monitor SHORT',
+            aiPredictionTimeframe: '2-8 weeks'
+          });
+          
+          tracked++;
+          console.log(`  ✅ Tracked SHORT ${risk.ticker} from Risk Monitor (Score: ${risk.risk_score})`);
+        } catch (error: any) {
+          console.error(`  ❌ Failed to track SHORT ${risk.ticker}:`, error.message);
+        }
+      }
+      
+      console.log(`  ✓ Tracked ${tracked} SHORT positions from Risk Monitor`);
+    } catch (error: any) {
+      if (error.message.includes('does not exist')) {
+        console.log('  ℹ️  Risk assessments table not yet created');
+      } else {
+        console.error('Error tracking from Risk Monitor:', error.message);
+      }
+    }
+  }
+  
+  /**
+   * Track opportunities from Pattern Watch
+   */
+  async trackFromPatternWatch() {
+    console.log('📊 Auto-tracking opportunities from Pattern Watch...');
+    
+    try {
+      const result = await pool.query(`
+        SELECT ticker, pattern_name, current_similarity, implications, created_at
+        FROM pattern_matches
+        WHERE current_similarity >= 75
+        AND implications ILIKE '%bullish%'
+        AND created_at >= NOW() - INTERVAL '7 days'
+        ORDER BY current_similarity DESC
+        LIMIT 5
+      `);
+      
+      let tracked = 0;
+      for (const pattern of result.rows) {
+        if (!pattern.ticker) continue;
+        
+        const exists = await this.checkIfAlreadyTracked(pattern.ticker, 'Pattern Watch');
+        if (exists) continue;
+        
+        try {
+          const currentPrice = await this.getCurrentPriceFromAPI(pattern.ticker);
+          if (!currentPrice) continue;
+          
+          await aiTipTrackerService.createPosition({
+            ticker: pattern.ticker,
+            companyName: pattern.ticker,
+            recommendationType: 'BUY',
+            entryPrice: currentPrice,
+            aiReasoning: `Pattern: ${pattern.pattern_name} (${pattern.current_similarity}% match). ${pattern.implications}`,
+            aiConfidence: pattern.current_similarity,
+            aiThesis: `Historical pattern suggests opportunity`,
+            aiStrategy: 'Pattern Watch',
+            aiPredictionTimeframe: '3-8 weeks'
+          });
+          
+          tracked++;
+          console.log(`  ✅ Tracked ${pattern.ticker} from Pattern: ${pattern.pattern_name}`);
+        } catch (error: any) {
+          console.error(`  ❌ Failed to track ${pattern.ticker}:`, error.message);
+        }
+      }
+      
+      console.log(`  ✓ Tracked ${tracked} new tips from Pattern Watch`);
+    } catch (error: any) {
+      if (error.message.includes('does not exist')) {
+        console.log('  ℹ️  Pattern matches table not yet created');
+      } else {
+        console.error('Error tracking from Pattern Watch:', error.message);
+      }
+    }
+  }
+  
+  /**
+   * Master function to track from ALL sources
+   */
   async trackAllSources() {
-    console.log('🎯 AUTO TIP TRACKER: Starting comprehensive tracking...\n');
+    console.log('🎯 AUTO TIP TRACKER: Starting comprehensive tracking from ALL sources...\n');
     
     const startTime = Date.now();
     
+    // Initialize tables first
+    await this.initializeTables();
+    
+    // Track from all available sources
     await this.trackFromDeepDives();
     await this.trackFromIntelligenceThreads();
+    await this.trackFromExecutiveSummary();
+    await this.trackFromRiskMonitor();
+    await this.trackFromPatternWatch();
     
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(`\n✅ Auto-tracking complete in ${duration}s`);
     
+    // Update all positions with latest prices
     try {
       await aiTipTrackerService.updateAllPositions();
       console.log('✅ All positions updated with latest prices');
@@ -147,6 +384,9 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
+  /**
+   * Check if ticker is already being tracked from this source
+   */
   private async checkIfAlreadyTracked(ticker: string, source: string): Promise<boolean> {
     try {
       const result = await pool.query(`
@@ -162,9 +402,11 @@ class AutoTipTrackerOrchestrator {
     }
   }
   
+  /**
+   * Get current price from Alpha Vantage API
+   */
   private async getCurrentPriceFromAPI(ticker: string): Promise<number | null> {
     if (!ALPHA_VANTAGE_KEY) {
-      console.log('  ⚠️  No Alpha Vantage API key configured');
       return null;
     }
     
