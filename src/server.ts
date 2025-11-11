@@ -35,6 +35,7 @@ import cacheRoutes from './routes/cacheRoutes.js';
 import enhancedDeepDiveRoutes from './routes/enhancedDeepDiveRoutes.js';
 import aiTipTrackerAnalyticsRoutes from './routes/aiTipTrackerAnalyticsRoutes.js';
 import intelligenceThreadsRoutes from './routes/intelligenceThreadsRoutes.js';
+import autoTipTrackerRoutes from './routes/autoTipTrackerRoutes.js';
 
 dotenv.config();
 
@@ -86,6 +87,7 @@ app.use('/api/vetting', tickerVettingRoutes);
 app.use('/api/cache', cacheRoutes);
 app.use('/api/deep-dive', enhancedDeepDiveRoutes);
 app.use('/api/ai-tip-tracker/analytics', aiTipTrackerAnalyticsRoutes);
+app.use('/api/auto-tip-tracker', autoTipTrackerRoutes);
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -177,6 +179,11 @@ API Endpoints:
   
   // Start scheduled ingestion service
   scheduledIngestionService.start();
+
+  // Start auto tip tracker
+  import('./schedulers/autoTipTrackerScheduler.js').then(module => {
+    module.initializeAutoTipTracker();
+  });
 });
 
 export default app;
