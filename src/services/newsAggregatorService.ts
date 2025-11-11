@@ -305,3 +305,30 @@ class NewsAggregatorService {
 }
 
 export default new NewsAggregatorService();
+
+// Add at the top of the file (after imports)
+const COMPANY_TO_TICKER_MAP: Record<string, string> = {
+  'pony ai': 'PONY',
+  'pony.ai': 'PONY',
+  'palantir': 'PLTR',
+  'nvidia': 'NVDA',
+  'microsoft': 'MSFT',
+  'apple': 'AAPL',
+  'google': 'GOOGL',
+  'alphabet': 'GOOGL',
+  'meta': 'META',
+  'facebook': 'META',
+  'amazon': 'AMZN',
+  'tesla': 'TSLA',
+  'coinbase': 'COIN',
+  'robinhood': 'HOOD',
+  'block': 'SQ',
+  'square': 'SQ',
+  'shopify': 'SHOP',
+  'roku': 'ROKU',
+  'zoom': 'ZM',
+  'roblox': 'RBLX',
+  'draftkings': 'DKNG',
+  'twilio': 'TWLO',
+  'spotify': 'SPOT',
+};
