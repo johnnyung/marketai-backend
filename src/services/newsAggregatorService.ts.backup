@@ -145,8 +145,6 @@ class NewsAggregatorService {
   private deduplicateNews(news: NewsItem[]): NewsItem[] {
     const seen = new Set<string>();
     return news.filter(item => {
-      if (!item.title || typeof item.title !== 'string') return false;
-
       const key = item.title.toLowerCase().substring(0, 50);
       if (seen.has(key)) return false;
       seen.add(key);
