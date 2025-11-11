@@ -1,5 +1,5 @@
 // backend/src/routes/intelligenceThreadsRoutes.ts
-// API routes for Intelligence Threads
+// API Routes for Intelligence Threads
 
 import express from 'express';
 import intelligenceThreadsService from '../services/intelligenceThreadsService.js';
@@ -8,31 +8,57 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 
 /**
- * GET /api/threads
- * Get all active intelligence threads
+ * POST /api/threads/detect
+ * Run thread detection on recent entries
  */
-router.get('/', authenticateToken, async (req, res) => {
+router.post('/detect', authenticateToken, async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
-    const threads = await intelligenceThreadsService.getActiveThreads(limit);
+    console.log('🧵 Manual thread detection triggered');
+    const threadsCreated = await intelligenceThreadsService.detectAndCreateThreads();
+    
+    res.json({
+      success: true,
+      data: {
+        threadsCreated,
+        message: threadsCreated > 0 
+          ? `Created ${threadsCreated} new intelligence thread${threadsCreated > 1 ? 's' : ''}`
+          : 'No new threads detected'
+      }
+    });
+  } catch (error: any) {
+    console.error('Thread detection error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to detect threads'
+    });
+  }
+});
+
+/**
+ * GET /api/threads/active
+ * Get all active threads
+ */
+router.get('/active', authenticateToken, async (req, res) => {
+  try {
+    const threads = await intelligenceThreadsService.getActiveThreads();
     
     res.json({
       success: true,
       data: threads,
       count: threads.length
     });
-  } catch (error: any) {
-    console.error('Error fetching threads:', error);
+  } catch (error) {
+    console.error('Error fetching active threads:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch intelligence threads'
+      error: 'Failed to fetch active threads'
     });
   }
 });
 
 /**
  * GET /api/threads/:id
- * Get specific thread by ID
+ * Get thread by ID with all events
  */
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
@@ -50,7 +76,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
       success: true,
       data: thread
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching thread:', error);
     res.status(500).json({
       success: false,
@@ -60,28 +86,34 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 /**
- * POST /api/threads/generate
- * Force regenerate intelligence threads
+ * PUT /api/threads/:id/status
+ * Update thread status
  */
-router.post('/generate', authenticateToken, async (req, res) => {
+router.put('/:id/status', authenticateToken, async (req, res) => {
   try {
-    const hoursBack = parseInt(req.body.hoursBack as string) || 72;
+    const threadId = parseInt(req.params.id);
+    const { status } = req.body;
     
-    console.log(`📊 Manual thread generation requested (${hoursBack} hours)`);
+    if (!['ACTIVE', 'MONITORING', 'RESOLVED', 'ARCHIVED'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status. Must be ACTIVE, MONITORING, RESOLVED, or ARCHIVED'
+      });
+    }
     
-    const threads = await intelligenceThreadsService.generateThreads(hoursBack);
+    await intelligenceThreadsService.updateThreadStatus(threadId, status);
     
     res.json({
       success: true,
-      message: `Generated ${threads.length} intelligence threads`,
-      data: threads,
-      count: threads.length
+      data: {
+        message: `Thread ${threadId} status updated to ${status}`
+      }
     });
-  } catch (error: any) {
-    console.error('Error generating threads:', error);
+  } catch (error) {
+    console.error('Error updating thread status:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to generate threads'
+      error: 'Failed to update thread status'
     });
   }
 });

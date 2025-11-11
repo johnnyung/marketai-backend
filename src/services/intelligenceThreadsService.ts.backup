@@ -182,7 +182,7 @@ Respond with ONLY valid JSON:
         analysis.insight,
         analysis.tradingImplication,
         analysis.riskFactors,
-        JSON.stringify(analysis.affectedTickers),
+        analysis.affectedTickers,
         candidate.entries.length,
         candidate.entries[candidate.entries.length - 1].event_date,
         candidate.entries[0].event_date,

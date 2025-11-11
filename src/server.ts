@@ -4,11 +4,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
 
-
 // Services
 import scheduledIngestionService from './services/scheduledIngestionService.js';
-import intelligenceThreadsRoutes from './routes/intelligenceThreadsRoutes.js';
-
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -31,10 +28,13 @@ import scheduledIngestionRoutes from './routes/scheduledIngestionRoutes.js';
 import dailyIntelligenceRoutes from './routes/dailyIntelligence.js';
 import tradingOpportunitiesRoutes from './routes/tradingOpportunities.js';
 import aiTipTrackerRoutes from './routes/aiTipTrackerRoutes.js';
-import deepDiveRoutes from './routes/deepDiveRoutes.js'; // ADD THIS LINE
+import deepDiveRoutes from './routes/deepDiveRoutes.js';
 import executiveSummaryRoutes from './routes/executiveSummaryRoutes.js';
 import tickerVettingRoutes from './routes/tickerVettingRoutes.js';
 import cacheRoutes from './routes/cacheRoutes.js';
+import enhancedDeepDiveRoutes from './routes/enhancedDeepDiveRoutes.js';
+import aiTipTrackerAnalyticsRoutes from './routes/aiTipTrackerAnalyticsRoutes.js';
+import intelligenceThreadsRoutes from './routes/intelligenceThreadsRoutes.js';
 
 dotenv.config();
 
@@ -79,11 +79,13 @@ app.use('/api/digest', digestRoutes);
 app.use('/api/digest', digestCleanupRoutes);
 app.use('/api/digest', scheduledIngestionRoutes);
 app.use('/api/ai-tip-tracker', aiTipTrackerRoutes);
-app.use('/api/deep-dive', deepDiveRoutes); // ADD THIS LINE
+app.use('/api/deep-dive', deepDiveRoutes);
 app.use('/api/threads', intelligenceThreadsRoutes);
 app.use('/api/intelligence', executiveSummaryRoutes);
 app.use('/api/vetting', tickerVettingRoutes);
 app.use('/api/cache', cacheRoutes);
+app.use('/api/deep-dive', enhancedDeepDiveRoutes);
+app.use('/api/ai-tip-tracker/analytics', aiTipTrackerAnalyticsRoutes);
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -165,6 +167,12 @@ API Endpoints:
   GET  /api/deep-dive/risk-monitor       - Market risk assessment
   GET  /api/deep-dive/political-intel    - Political intelligence briefing
   GET  /api/deep-dive/all                - All analyses at once
+  
+  🧵 Intelligence Threads:
+  POST /api/threads/detect               - Run AI thread detection
+  GET  /api/threads/active               - Get all active threads
+  GET  /api/threads/:id                  - Get thread by ID
+  PUT  /api/threads/:id/status           - Update thread status
   `);
   
   // Start scheduled ingestion service
