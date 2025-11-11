@@ -137,7 +137,7 @@ class EnhancedDeepDiveService {
           risks,
           recommendation,
           confidence,
-          created_date as generated_at
+          created_at as generated_at
         FROM deep_dive_cache
         WHERE ticker = $1 
           AND created_date = CURRENT_DATE
@@ -196,7 +196,7 @@ class EnhancedDeepDiveService {
           risks = EXCLUDED.risks,
           recommendation = EXCLUDED.recommendation,
           confidence = EXCLUDED.confidence,
-          created_date = NOW()
+          created_at = NOW()
       `, [
         ticker.toUpperCase(),
         analysis.companyName,
