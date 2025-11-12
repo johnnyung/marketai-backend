@@ -3,8 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
-import pool from './db/index.js';
-import { authenticateToken } from './middleware/auth.js';
 
 // Services
 import scheduledIngestionService from './services/scheduledIngestionService.js';
@@ -44,30 +42,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Reduce logging in production
-const isDev = process.env.NODE_ENV === 'development';
-const log = isDev ? console.log.bind(console) : () => {};
-
 // Trust proxy for Railway
 app.set('trust proxy', true);
 
 // Middleware
 app.use(helmet());
 app.use(compression());
-
-// Enhanced CORS - supports multiple origins
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://stocks.jeeniemedia.com',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.use(express.json());
 
 // Health check
@@ -75,43 +59,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ========================================
-// DASHBOARD SUMMARY ENDPOINTS (ADDED)
-// ========================================
-
-// Tip Tracker Summary for Dashboard
-app.get('/api/tip-tracker/summary', authenticateToken, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT 
-        COUNT(*) FILTER (WHERE status = 'OPEN') as "openPositions",
-        COUNT(*) FILTER (WHERE status = 'CLOSED') as "closedPositions",
-        ROUND(AVG(CASE WHEN status = 'CLOSED' AND current_pl > 0 THEN 100 ELSE 0 END), 1) as "winRate"
-      FROM ai_tip_tracker
-    `);
-    res.json(result.rows[0] || { openPositions: 0, closedPositions: 0, winRate: 0 });
-  } catch (error) {
-    console.error('Tip tracker summary error:', error);
-    res.status(500).json({ error: 'Failed to fetch tip tracker summary' });
-  }
-});
-
-// Update all tip tracker prices
-app.post('/api/tip-tracker/update-prices', authenticateToken, async (req, res) => {
-  try {
-    // Import and call the update service
-    const { default: aiTipTrackerService } = await import('./services/aiTipTrackerService.js');
-    await aiTipTrackerService.updateAllPositions();
-    res.json({ success: true, message: 'Prices updated' });
-  } catch (error) {
-    console.error('Update prices error:', error);
-    res.status(500).json({ error: 'Failed to update prices' });
-  }
-});
-
-// ========================================
 // API Routes
-// ========================================
 app.use('/api/auth', authRoutes);
 app.use('/api/market', marketRoutes);
 app.use('/api/news', newsRoutes);
@@ -133,11 +81,11 @@ app.use('/api/digest', digestCleanupRoutes);
 app.use('/api/digest', scheduledIngestionRoutes);
 app.use('/api/ai-tip-tracker', aiTipTrackerRoutes);
 app.use('/api/deep-dive', deepDiveRoutes);
-app.use('/api/deep-dive', enhancedDeepDiveRoutes);  // Both deep dive routes
 app.use('/api/threads', intelligenceThreadsRoutes);
 app.use('/api/intelligence', executiveSummaryRoutes);
 app.use('/api/vetting', tickerVettingRoutes);
 app.use('/api/cache', cacheRoutes);
+app.use('/api/deep-dive', enhancedDeepDiveRoutes);
 app.use('/api/ai-tip-tracker/analytics', aiTipTrackerAnalyticsRoutes);
 app.use('/api/auto-tip-tracker', autoTipTrackerRoutes);
 
@@ -152,7 +100,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found', path: req.path });
+  res.status(404).json({ error: 'Route not found' });
 });
 
 app.listen(PORT, () => {
@@ -165,7 +113,6 @@ app.listen(PORT, () => {
 Environment: ${process.env.NODE_ENV || 'development'}
 Frontend:    ${process.env.FRONTEND_URL || 'http://localhost:3000'}
 Database:    ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}
-Logging:     ${isDev ? 'VERBOSE (dev)' : 'REDUCED (prod)'}
 
 API Endpoints:
   Authentication:
@@ -205,23 +152,18 @@ API Endpoints:
   GET  /api/intelligence/daily/latest    - Get latest report
   GET  /api/intelligence/daily/:date     - Get report by date
   GET  /api/intelligence/daily/recent    - Get recent reports
-  GET  /api/intelligence/signals         - Get trading signals
   
   🎯 AI Trading Signals:
   GET  /api/opportunities/signals        - Get trading opportunities
   
   💰 AI Tip Tracker:
-  GET  /api/tip-tracker/summary          - NEW! Dashboard summary
-  POST /api/tip-tracker/update-prices    - NEW! Update all prices
   GET  /api/ai-tip-tracker/summary       - Performance summary
   GET  /api/ai-tip-tracker/positions/open - Open positions
   GET  /api/ai-tip-tracker/positions/closed - Closed positions
   POST /api/ai-tip-tracker/position      - Create tracked position
   POST /api/ai-tip-tracker/update-all    - Update all positions
   
-  📬 Deep Dive Analysis:
-  GET  /api/deep-dive/:ticker            - Analyze any ticker
-  GET  /api/deep-dive/cached             - Get cached analyses
+  🔬 Deep Dive Analysis:
   GET  /api/deep-dive/ticker-of-day      - Comprehensive ticker analysis
   GET  /api/deep-dive/pattern-watch      - Historical pattern matching
   GET  /api/deep-dive/risk-monitor       - Market risk assessment
@@ -230,21 +172,17 @@ API Endpoints:
   
   🧵 Intelligence Threads:
   POST /api/threads/detect               - Run AI thread detection
-  GET  /api/threads                      - Get all threads
+  GET  /api/threads/active               - Get all active threads
   GET  /api/threads/:id                  - Get thread by ID
   PUT  /api/threads/:id/status           - Update thread status
   `);
   
   // Start scheduled ingestion service
-  console.log('🔄 Starting scheduled ingestion service...');
   scheduledIngestionService.start();
 
   // Start auto tip tracker
-  console.log('🎯 Starting auto tip tracker...');
   import('./schedulers/autoTipTrackerScheduler.js').then(module => {
     module.initializeAutoTipTracker();
-  }).catch(err => {
-    console.error('Failed to start auto tip tracker:', err);
   });
 });
 
