@@ -8,14 +8,23 @@ class PriceService {
    * Get stock price - delegates to marketDataService
    */
   async getStockPrice(ticker: string): Promise<number | null> {
-    return await marketDataService.fetchStockPrice(ticker);
+    const priceData = await marketDataService.getStockPrice(ticker);
+    return priceData ? priceData.price : null;
   }
   
   /**
    * Get multiple prices - delegates to marketDataService
    */
   async getMultiplePrices(tickers: string[]): Promise<Map<string, number>> {
-    return await marketDataService.fetchMultiplePrices(tickers);
+    const pricesMap = await marketDataService.getMultiplePrices(tickers);
+    
+    // Convert Map<string, PriceData> to Map<string, number>
+    const result = new Map<string, number>();
+    for (const [ticker, priceData] of pricesMap.entries()) {
+      result.set(ticker, priceData.price);
+    }
+    
+    return result;
   }
   
   /**

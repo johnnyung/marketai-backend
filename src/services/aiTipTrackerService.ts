@@ -43,7 +43,12 @@ interface TrackerPosition {
 
 // Fetch stock price using market data service
 async function fetchStockPrice(ticker: string): Promise<number | null> {
-  return await marketDataService.fetchStockPrice(ticker);
+  const priceData = await marketDataService.getStockPrice(ticker);
+  if (priceData) {
+    console.log(`✅ ${ticker}: $${priceData.price.toFixed(2)} (${priceData.source})`);
+    return priceData.price;
+  }
+  return null;
 }
 
 class AITipTrackerService {
@@ -122,7 +127,7 @@ class AITipTrackerService {
   }
   
   /**
-   * Update all open positions with current prices
+   * Update all open positions with current prices (OPTIMIZED WITH BATCH FETCHING)
    */
   async updateAllPositions(): Promise<void> {
     const client = await pool.connect();
@@ -136,18 +141,62 @@ class AITipTrackerService {
       `);
       
       const positions = result.rows;
-      console.log(`🔄 Updating ${positions.length} open positions...`);
+      console.log(`🔄 Updating ${positions.length} open positions with multi-API service...`);
       
+      // Get all tickers
+      const tickers = positions.map(p => p.ticker);
+      
+      // Fetch all prices in batch (much faster!)
+      const pricesMap = await marketDataService.getMultiplePrices(tickers);
+      
+      console.log(`📊 Fetched ${pricesMap.size}/${tickers.length} prices`);
+      
+      // Update each position
       for (const position of positions) {
         try {
-          await this.updatePosition(position.id, position.ticker);
+          const priceData = pricesMap.get(position.ticker);
+          
+          if (!priceData) {
+            console.warn(`⚠️ No price data for ${position.ticker}`);
+            continue;
+          }
+          
+          const currentPrice = priceData.price;
+          
+          let pnlMultiplier = 1;
+          if (position.recommendation_type === 'SHORT') {
+            pnlMultiplier = -1;
+          }
+          
+          const currentValue = position.shares * currentPrice;
+          const currentPnl = (currentValue - 100) * pnlMultiplier;
+          const currentPnlPct = (currentPnl / 100) * 100;
+          const daysHeld = Math.floor((Date.now() - new Date(position.entry_date).getTime()) / (1000 * 60 * 60 * 24));
+          
+          await client.query(`
+            UPDATE ai_tip_tracker
+            SET current_price = $1, current_value = $2, current_pnl = $3,
+                current_pnl_pct = $4, days_held = $5, last_price_update = NOW()
+            WHERE id = $6
+          `, [currentPrice, currentValue, currentPnl, currentPnlPct, daysHeld, position.id]);
+          
+          await client.query(`
+            INSERT INTO ai_tip_tracker_daily_prices (
+              tracker_id, date, close_price, position_value, pnl, pnl_pct, days_held
+            ) VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6)
+            ON CONFLICT (tracker_id, date) DO UPDATE
+            SET close_price = $2, position_value = $3, pnl = $4, pnl_pct = $5, days_held = $6
+          `, [position.id, currentPrice, currentValue, currentPnl, currentPnlPct, daysHeld]);
+          
+          console.log(`✅ ${position.ticker}: $${currentPrice.toFixed(2)} | P/L: $${currentPnl.toFixed(2)} (${priceData.source})`);
+          
         } catch (error) {
           console.error(`Error updating position ${position.id}:`, error);
         }
       }
       
       await this.calculateSummaryStatistics();
-      console.log(`✅ Updated all positions successfully`);
+      console.log(`✅ All positions updated with latest prices`);
       
     } catch (error) {
       console.error('❌ Error updating positions:', error);

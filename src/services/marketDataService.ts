@@ -1,216 +1,247 @@
-// backend/src/services/marketDataService.ts
-// Real-time stock price fetching from Alpha Vantage
+// src/services/marketDataService.ts
+// Multi-API price fetching with fallbacks
+// FREE APIs: Finnhub (60/min), Yahoo Finance, IEX Cloud
 
-interface StockPrice {
+import fetch from 'node-fetch';
+
+interface PriceData {
   ticker: string;
   price: number;
-  timestamp: Date;
   source: string;
+  timestamp: Date;
 }
 
+// Price cache to avoid duplicate calls
+const priceCache = new Map<string, { price: number; timestamp: Date }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 class MarketDataService {
-  private apiKey: string;
-  private baseUrl = 'https://www.alphavantage.co/query';
-  private cache: Map<string, { price: number; timestamp: Date }> = new Map();
-  private cacheExpiryMinutes = 5; // Cache prices for 5 minutes
+  private finnhubKey: string;
+  private iexKey: string;
 
   constructor() {
-    this.apiKey = process.env.ALPHA_VANTAGE_API_KEY || '';
+    this.finnhubKey = process.env.FINNHUB_API_KEY || '';
+    this.iexKey = process.env.IEX_API_KEY || '';
+  }
+
+  /**
+   * Get stock price with fallback to multiple APIs
+   */
+  async getStockPrice(ticker: string): Promise<PriceData | null> {
+    // Check cache first
+    const cached = this.getCachedPrice(ticker);
+    if (cached) {
+      return cached;
+    }
+
+    // Try APIs in order: Finnhub -> Yahoo Finance -> IEX Cloud
+    let result = await this.tryFinnhub(ticker);
+    if (result) return this.cacheAndReturn(result);
+
+    result = await this.tryYahooFinance(ticker);
+    if (result) return this.cacheAndReturn(result);
+
+    result = await this.tryIEXCloud(ticker);
+    if (result) return this.cacheAndReturn(result);
+
+    console.warn(`❌ All APIs failed for ${ticker}`);
+    return null;
+  }
+
+  /**
+   * Get multiple stock prices efficiently
+   */
+  async getMultiplePrices(tickers: string[]): Promise<Map<string, PriceData>> {
+    const results = new Map<string, PriceData>();
     
-    if (!this.apiKey) {
-      console.warn('⚠️ ALPHA_VANTAGE_API_KEY not set - using mock prices');
+    // Process in batches to respect rate limits
+    const batchSize = 10;
+    for (let i = 0; i < tickers.length; i += batchSize) {
+      const batch = tickers.slice(i, i + batchSize);
+      
+      await Promise.all(
+        batch.map(async (ticker) => {
+          const price = await this.getStockPrice(ticker);
+          if (price) {
+            results.set(ticker, price);
+          }
+        })
+      );
+      
+      // Small delay between batches
+      if (i + batchSize < tickers.length) {
+        await this.sleep(1000); // 1 second between batches
+      }
     }
+    
+    return results;
   }
 
   /**
-   * Fetch current stock price
-   * Uses cache if available and recent
+   * Finnhub API - FREE: 60 calls/minute
+   * Sign up: https://finnhub.io/register
    */
-  async fetchStockPrice(ticker: string): Promise<number | null> {
-    try {
-      // Check cache first
-      const cached = this.getCachedPrice(ticker);
-      if (cached) {
-        console.log(`💾 Using cached price for ${ticker}: $${cached}`);
-        return cached;
-      }
-
-      // If no API key, use mock prices
-      if (!this.apiKey) {
-        return this.getMockPrice(ticker);
-      }
-
-      // Fetch from Alpha Vantage
-      const price = await this.fetchFromAlphaVantage(ticker);
-      
-      if (price) {
-        // Cache the price
-        this.cache.set(ticker, {
-          price,
-          timestamp: new Date()
-        });
-        console.log(`📈 Fetched real price for ${ticker}: $${price}`);
-        return price;
-      }
-
-      // Fallback to mock if API fails
-      console.warn(`⚠️ API failed for ${ticker}, using mock price`);
-      return this.getMockPrice(ticker);
-
-    } catch (error) {
-      console.error(`❌ Error fetching price for ${ticker}:`, error);
-      return this.getMockPrice(ticker);
+  private async tryFinnhub(ticker: string): Promise<PriceData | null> {
+    if (!this.finnhubKey) {
+      return null;
     }
-  }
 
-  /**
-   * Fetch price from Alpha Vantage API
-   */
-  private async fetchFromAlphaVantage(ticker: string): Promise<number | null> {
     try {
-      const url = `${this.baseUrl}?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${this.apiKey}`;
-      
+      const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${this.finnhubKey}`;
       const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
+        return null;
       }
 
       const data: any = await response.json();
-
-      // Check for API errors
-      if (data['Error Message']) {
-        console.error(`Alpha Vantage error: ${data['Error Message']}`);
-        return null;
-      }
-
-      if (data['Note']) {
-        console.warn(`Alpha Vantage rate limit: ${data['Note']}`);
-        return null;
-      }
-
-      // Extract price from response
-      const quote = data['Global Quote'];
-      if (!quote || !quote['05. price']) {
-        console.warn(`No price data for ${ticker}`);
-        return null;
-      }
-
-      const price = parseFloat(quote['05. price']);
       
-      if (isNaN(price) || price <= 0) {
-        console.warn(`Invalid price for ${ticker}: ${quote['05. price']}`);
-        return null;
+      if (data.c && data.c > 0) {
+        return {
+          ticker,
+          price: data.c, // Current price
+          source: 'Finnhub',
+          timestamp: new Date()
+        };
       }
-
-      return price;
-
     } catch (error) {
-      console.error(`Alpha Vantage fetch error for ${ticker}:`, error);
-      return null;
+      console.error(`Finnhub error for ${ticker}:`, error);
     }
+    
+    return null;
   }
 
   /**
-   * Get cached price if available and recent
+   * Yahoo Finance (via yfinance2 free API)
+   * FREE: No key needed, reasonable rate limits
    */
-  private getCachedPrice(ticker: string): number | null {
-    const cached = this.cache.get(ticker);
+  private async tryYahooFinance(ticker: string): Promise<PriceData | null> {
+    try {
+      // Using Yahoo Finance v8 API (no key required)
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0'
+        }
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data: any = await response.json();
+      
+      const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      
+      if (price && price > 0) {
+        return {
+          ticker,
+          price,
+          source: 'Yahoo Finance',
+          timestamp: new Date()
+        };
+      }
+    } catch (error) {
+      console.error(`Yahoo Finance error for ${ticker}:`, error);
+    }
+    
+    return null;
+  }
+
+  /**
+   * IEX Cloud - FREE: 50,000 calls/month
+   * Sign up: https://iexcloud.io/cloud-login#/register
+   */
+  private async tryIEXCloud(ticker: string): Promise<PriceData | null> {
+    if (!this.iexKey) {
+      return null;
+    }
+
+    try {
+      const url = `https://cloud.iexapis.com/stable/stock/${ticker}/quote?token=${this.iexKey}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        return null;
+      }
+
+      const data: any = await response.json();
+      
+      if (data.latestPrice && data.latestPrice > 0) {
+        return {
+          ticker,
+          price: data.latestPrice,
+          source: 'IEX Cloud',
+          timestamp: new Date()
+        };
+      }
+    } catch (error) {
+      console.error(`IEX Cloud error for ${ticker}:`, error);
+    }
+    
+    return null;
+  }
+
+  /**
+   * Check cache for recent price
+   */
+  private getCachedPrice(ticker: string): PriceData | null {
+    const cached = priceCache.get(ticker);
     
     if (!cached) {
       return null;
     }
 
-    // Check if cache is still valid
-    const now = new Date();
-    const ageMinutes = (now.getTime() - cached.timestamp.getTime()) / (1000 * 60);
+    const age = Date.now() - cached.timestamp.getTime();
     
-    if (ageMinutes > this.cacheExpiryMinutes) {
-      this.cache.delete(ticker);
-      return null;
+    if (age < CACHE_DURATION) {
+      return {
+        ticker,
+        price: cached.price,
+        source: 'Cache',
+        timestamp: cached.timestamp
+      };
     }
 
-    return cached.price;
+    // Cache expired
+    priceCache.delete(ticker);
+    return null;
   }
 
   /**
-   * Mock prices for testing/fallback
+   * Cache price and return
    */
-  private getMockPrice(ticker: string): number {
-    const mockPrices: Record<string, number> = {
-      'NVDA': 485.50,
-      'TSLA': 242.84,
-      'AAPL': 189.95,
-      'MSFT': 378.91,
-      'GOOGL': 141.80,
-      'AMZN': 152.03,
-      'META': 338.58,
-      'AMD': 122.93,
-      'NFLX': 456.66,
-      'SPY': 455.48,
-      'UPS': 131.45,
-      'FDX': 265.78,
-      'MRK': 98.32,
-      'MTSR': 165.89,
-      'PLTR': 42.18,
-      'QQQ': 395.42,
-      'DIA': 348.55,
-      'IWM': 215.67
-    };
-
-    return mockPrices[ticker] || 100.00;
+  private cacheAndReturn(data: PriceData): PriceData {
+    priceCache.set(data.ticker, {
+      price: data.price,
+      timestamp: data.timestamp
+    });
+    return data;
   }
 
   /**
-   * Fetch multiple prices (with rate limiting)
+   * Clear cache (useful for testing)
    */
-  async fetchMultiplePrices(tickers: string[]): Promise<Map<string, number>> {
-    const prices = new Map<string, number>();
-    
-    console.log(`📊 Fetching prices for ${tickers.length} tickers...`);
-    
-    for (const ticker of tickers) {
-      const price = await this.fetchStockPrice(ticker);
-      
-      if (price) {
-        prices.set(ticker, price);
-      }
-      
-      // Rate limiting: Alpha Vantage allows 5 calls/minute (free tier)
-      // Wait 12 seconds between calls to stay under limit
-      if (this.apiKey && tickers.indexOf(ticker) < tickers.length - 1) {
-        await this.sleep(12000);
-      }
-    }
-    
-    console.log(`✅ Fetched ${prices.size}/${tickers.length} prices`);
-    
-    return prices;
+  clearCache() {
+    priceCache.clear();
   }
 
   /**
-   * Clear cache
+   * Sleep helper
    */
-  clearCache(): void {
-    this.cache.clear();
-    console.log('🗑️ Price cache cleared');
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
    * Get cache stats
    */
-  getCacheStats(): { size: number; tickers: string[] } {
+  getCacheStats() {
     return {
-      size: this.cache.size,
-      tickers: Array.from(this.cache.keys())
+      size: priceCache.size,
+      tickers: Array.from(priceCache.keys())
     };
-  }
-
-  /**
-   * Sleep utility
-   */
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 

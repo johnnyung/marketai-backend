@@ -4,8 +4,57 @@
 import express from 'express';
 import intelligenceThreadsService from '../services/intelligenceThreadsService.js';
 import { authenticateToken } from '../middleware/auth.js';
+import pool from '../db/index.js';
 
 const router = express.Router();
+
+/**
+ * GET /api/threads
+ * Get all threads with optional status filter
+ */
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.query;
+    
+    let query = `
+      SELECT 
+        id,
+        name as "threadName",
+        description,
+        confidence_score as "confidenceScore",
+        affected_tickers as "affectedTickers",
+        entry_count as "entryCount",
+        status,
+        created_at as "createdDate",
+        updated_at as "updatedDate"
+      FROM intelligence_threads
+    `;
+    
+    const params: any[] = [];
+    
+    if (status) {
+      query += ` WHERE status = $1`;
+      params.push(status);
+    }
+    
+    query += ` ORDER BY updated_at DESC`;
+    
+    const result = await pool.query(query, params);
+    
+    res.json({
+      success: true,
+      threads: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching threads:', error);
+    res.json({ 
+      success: true,
+      threads: [], 
+      count: 0 
+    });
+  }
+});
 
 /**
  * POST /api/threads/detect

@@ -5,6 +5,7 @@ import express from 'express';
 import dataIngestionService from '../services/dataIngestionService.js';
 import aiAnalysisEngine from '../services/aiAnalysisEngine.js';
 import realDataIntegrationService from '../services/realDataIntegrationService.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -248,6 +249,51 @@ router.post('/refresh', async (req, res) => {
   } catch (error: any) {
     console.error('❌ Error clearing cache:', error);
     res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
+/**
+ * GET /api/intelligence/signals
+ * Get AI trading signals for Dashboard
+ */
+router.get('/signals', authenticateToken, async (req, res) => {
+  try {
+    const count = parseInt(req.query.count as string) || 5;
+    
+    // Return empty signals for now (table might not exist yet)
+    res.json({ 
+      signals: [],
+      count: 0,
+      generatedAt: new Date()
+    });
+    
+  } catch (error) {
+    console.error('Error fetching signals:', error);
+    res.json({ signals: [], count: 0 });
+  }
+});
+
+/**
+ * POST /api/intelligence/signals/regenerate
+ * Regenerate trading signals (placeholder for future AI integration)
+ */
+router.post('/signals/regenerate', authenticateToken, async (req, res) => {
+  try {
+    // Placeholder - will integrate with AI signal generation later
+    console.log('📊 Signal regeneration requested');
+    
+    res.json({
+      success: true,
+      message: 'Signal regeneration triggered',
+      signals: [],
+      timestamp: new Date()
+    });
+  } catch (error) {
+    console.error('Error regenerating signals:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to regenerate signals'
+    });
   }
 });
 

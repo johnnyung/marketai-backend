@@ -8,6 +8,7 @@ import { authenticateToken } from './middleware/auth.js';
 
 // Services
 import scheduledIngestionService from './services/scheduledIngestionService.js';
+import marketDataService from './services/marketDataService.js';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -56,13 +57,18 @@ app.use(helmet());
 app.use(compression());
 
 // Enhanced CORS - supports multiple origins
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://stocks.jeeniemedia.com'
+];
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://stocks.jeeniemedia.com',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -86,7 +92,7 @@ app.get('/api/tip-tracker/summary', authenticateToken, async (req, res) => {
       SELECT 
         COUNT(*) FILTER (WHERE status = 'OPEN') as "openPositions",
         COUNT(*) FILTER (WHERE status = 'CLOSED') as "closedPositions",
-        ROUND(AVG(CASE WHEN status = 'CLOSED' AND current_pl > 0 THEN 100 ELSE 0 END), 1) as "winRate"
+        ROUND(AVG(CASE WHEN status = 'CLOSED' AND current_pnl > 0 THEN 100 ELSE 0 END), 1) as "winRate"
       FROM ai_tip_tracker
     `);
     res.json(result.rows[0] || { openPositions: 0, closedPositions: 0, winRate: 0 });
@@ -140,6 +146,103 @@ app.use('/api/vetting', tickerVettingRoutes);
 app.use('/api/cache', cacheRoutes);
 app.use('/api/ai-tip-tracker/analytics', aiTipTrackerAnalyticsRoutes);
 app.use('/api/auto-tip-tracker', autoTipTrackerRoutes);
+
+// ========================================
+// MARKET DATA TEST ENDPOINTS
+// ========================================
+
+/**
+ * TEST: Get single stock price
+ * GET /api/test/price/:ticker
+ */
+app.get('/api/test/price/:ticker', authenticateToken, async (req, res) => {
+  try {
+    const { ticker } = req.params;
+    const priceData = await marketDataService.getStockPrice(ticker);
+    
+    if (priceData) {
+      res.json({
+        success: true,
+        data: priceData,
+        message: `Successfully fetched ${ticker} from ${priceData.source}`
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: `Could not fetch price for ${ticker} from any API`
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * TEST: Get multiple stock prices
+ * POST /api/test/prices
+ */
+app.post('/api/test/prices', authenticateToken, async (req, res) => {
+  try {
+    const { tickers } = req.body;
+    
+    if (!Array.isArray(tickers)) {
+      return res.status(400).json({
+        success: false,
+        error: 'tickers must be an array'
+      });
+    }
+    
+    console.log(`📊 Testing prices for ${tickers.length} stocks...`);
+    const startTime = Date.now();
+    
+    const prices = await marketDataService.getMultiplePrices(tickers);
+    
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    
+    const results = Array.from(prices.values());
+    
+    res.json({
+      success: true,
+      data: results,
+      stats: {
+        requested: tickers.length,
+        fetched: results.length,
+        failed: tickers.length - results.length,
+        duration: `${duration}ms`,
+        avgPerStock: `${(duration / tickers.length).toFixed(0)}ms`
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * TEST: Get cache stats
+ * GET /api/test/cache-stats
+ */
+app.get('/api/test/cache-stats', authenticateToken, async (req, res) => {
+  try {
+    const stats = marketDataService.getCacheStats();
+    res.json({
+      success: true,
+      data: stats,
+      message: `Cache contains ${stats.size} prices`
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
