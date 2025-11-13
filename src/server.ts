@@ -92,10 +92,25 @@ app.get('/api/tip-tracker/summary', authenticateToken, async (req, res) => {
       SELECT 
         COUNT(*) FILTER (WHERE status = 'OPEN') as "openPositions",
         COUNT(*) FILTER (WHERE status = 'CLOSED') as "closedPositions",
-        ROUND(AVG(CASE WHEN status = 'CLOSED' AND current_pnl > 0 THEN 100 ELSE 0 END), 1) as "winRate"
+        COALESCE(
+          ROUND(
+            (COUNT(*) FILTER (WHERE status = 'CLOSED' AND current_pnl > 0)::numeric / 
+             NULLIF(COUNT(*) FILTER (WHERE status = 'CLOSED'), 0)) * 100, 
+            1
+          ),
+          0
+        )::numeric as "winRate"
       FROM ai_tip_tracker
     `);
-    res.json(result.rows[0] || { openPositions: 0, closedPositions: 0, winRate: 0 });
+    
+    const data = result.rows[0] || { openPositions: 0, closedPositions: 0, winRate: 0 };
+    
+    // Ensure all values are numbers
+    res.json({
+      openPositions: parseInt(data.openPositions) || 0,
+      closedPositions: parseInt(data.closedPositions) || 0,
+      winRate: parseFloat(data.winRate) || 0
+    });
   } catch (error) {
     console.error('Tip tracker summary error:', error);
     res.status(500).json({ error: 'Failed to fetch tip tracker summary' });
