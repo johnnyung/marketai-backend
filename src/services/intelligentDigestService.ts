@@ -606,8 +606,14 @@ class IntelligentDigestService {
     };
   }
   
-  private generateHash(content: string): string {
-    return crypto.createHash('sha256').update(content).digest('hex');
+  private generateHash(content: string | any): string {
+    try {
+      const contentString = typeof content === 'string' ? content : JSON.stringify(content);
+      return crypto.createHash('sha256').update(contentString).digest('hex');
+    } catch (error) {
+      console.error('Error generating hash:', error);
+      return crypto.createHash('sha256').update(Date.now().toString()).digest('hex');
+    }
   }
   
   /**
