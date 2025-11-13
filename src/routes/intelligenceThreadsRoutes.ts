@@ -19,7 +19,7 @@ router.get('/', authenticateToken, async (req, res) => {
     let query = `
       SELECT 
         id,
-        name as "threadName",
+        title as "threadName",
         description,
         confidence_score as "confidenceScore",
         affected_tickers as "affectedTickers",

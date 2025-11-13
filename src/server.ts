@@ -154,7 +154,6 @@ app.use('/api/digest', digestCleanupRoutes);
 app.use('/api/digest', scheduledIngestionRoutes);
 app.use('/api/ai-tip-tracker', aiTipTrackerRoutes);
 app.use('/api/deep-dive', deepDiveRoutes);
-app.use('/api/deep-dive', enhancedDeepDiveRoutes);  // Both deep dive routes
 app.use('/api/threads', intelligenceThreadsRoutes);
 app.use('/api/intelligence', executiveSummaryRoutes);
 app.use('/api/vetting', tickerVettingRoutes);

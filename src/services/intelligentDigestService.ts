@@ -47,6 +47,40 @@ class IntelligentDigestService {
     });
   }
   
+  /**
+   * Validate if a string is a real ticker symbol
+   */
+  private isValidTicker(ticker: string): boolean {
+    if (!ticker || typeof ticker !== 'string') return false;
+    
+    const cleaned = ticker.trim().toUpperCase();
+    if (!/^[A-Z]{1,5}$/.test(cleaned)) return false;
+    
+    const blacklist = new Set([
+      'THE', 'AND', 'BUT', 'FOR', 'ARE', 'WITH', 'THIS', 'THAT',
+      'FROM', 'WILL', 'MORE', 'SOME', 'BEEN', 'HAVE', 'WERE',
+      'WHAT', 'WHEN', 'WHERE', 'WHO', 'WHY', 'HOW', 'WHICH',
+      'CAN', 'MAY', 'WOULD', 'COULD', 'SHOULD', 'MIGHT',
+      'SAID', 'OVER', 'JUST', 'EVEN', 'MOST', 'ALSO', 'INTO',
+      'TECH', 'NEWS', 'DATA', 'INFO', 'CITY', 'STATE', 'SUCH',
+      'FISH', 'TOKEN', 'RATE', 'API', 'AI', 'BOND', 'THAN',
+      'WHY', 'THEM', 'THEN', 'CISCO', 'S', 'A', 'I'
+    ]);
+    
+    return !blacklist.has(cleaned);
+  }
+  
+  /**
+   * Filter and clean ticker arrays
+   */
+  private filterTickers(tickers: string[]): string[] {
+    if (!Array.isArray(tickers)) return [];
+    return tickers
+      .map(t => String(t).toUpperCase().trim())
+      .filter(t => this.isValidTicker(t))
+      .filter((v, i, a) => a.indexOf(v) === i);
+  }
+  
   async ingestAndStore(): Promise<{
     collected: number;
     processed: number;
@@ -332,7 +366,7 @@ class IntelligentDigestService {
       analysis.relevanceScore = trade.totalValue > 1000000 ? 90 : 60;
       analysis.summary = `${trade.insider} (${trade.title}) ${trade.transactionType} ${trade.shares.toLocaleString()} shares of ${trade.ticker} at $${trade.pricePerShare}`;
       analysis.tags = [trade.transactionType, 'insider', trade.ticker];
-      analysis.entities.tickers = [trade.ticker];
+      analysis.entities.tickers = this.filterTickers([trade.ticker]);
       analysis.entities.people = [trade.insider];
       analysis.importance = trade.totalValue > 5000000 ? 'critical' : 'high';
       analysis.sentiment = trade.transactionType === 'buy' ? 'bullish' : 'bearish';
@@ -343,7 +377,7 @@ class IntelligentDigestService {
       analysis.relevanceScore = Math.min(100, mention.mentions * 5);
       analysis.summary = `${mention.ticker} trending on Reddit with ${mention.mentions} mentions, ${mention.sentiment > 0 ? 'bullish' : 'bearish'} sentiment`;
       analysis.tags = ['social', 'trending', mention.sentiment > 0 ? 'bullish' : 'bearish'];
-      analysis.entities.tickers = [mention.ticker];
+      analysis.entities.tickers = this.filterTickers([mention.ticker]);
       analysis.importance = mention.mentions > 1000 ? 'high' : 'medium';
       analysis.sentiment = mention.sentiment > 0 ? 'bullish' : 'bearish';
     }
@@ -353,7 +387,7 @@ class IntelligentDigestService {
       analysis.relevanceScore = newsAggregatorService.calculateRelevance(article);
       analysis.summary = article.title;
       const tickers = newsAggregatorService.extractTickers(`${article.title} ${article.description}`);
-      analysis.entities.tickers = tickers.slice(0, 3);
+      analysis.entities.tickers = this.filterTickers(tickers).slice(0, 3);
       analysis.tags = ['news', article.category || 'market'];
       
       const text = `${article.title} ${article.description}`.toLowerCase();
@@ -370,7 +404,7 @@ class IntelligentDigestService {
       const announcement = entry.rawData;
       analysis.relevanceScore = politicalIntelligenceService.calculateRelevance('announcement', announcement);
       analysis.summary = announcement.title;
-      analysis.entities.tickers = politicalIntelligenceService.extractTickers(announcement.content);
+      analysis.entities.tickers = this.filterTickers(politicalIntelligenceService.extractTickers(announcement.content));
       analysis.tags = ['political', announcement.category];
       analysis.importance = analysis.relevanceScore >= 85 ? 'critical' : 'high';
       
@@ -404,7 +438,7 @@ class IntelligentDigestService {
       analysis.relevanceScore = cryptoIntelligenceService.calculateRelevance('announcement', announcement);
       analysis.summary = announcement.title;
       const symbols = cryptoIntelligenceService.extractCryptoSymbols(`${announcement.title} ${announcement.content}`);
-      analysis.entities.tickers = symbols.slice(0, 5); // Store crypto symbols in tickers field
+      analysis.entities.tickers = this.filterTickers(symbols).slice(0, 5);
       analysis.tags = ['crypto', announcement.category, announcement.exchange];
       analysis.importance = analysis.relevanceScore >= 75 ? 'high' : 'medium';
       analysis.sentiment = cryptoIntelligenceService.determineSentiment(`${announcement.title} ${announcement.content}`);
@@ -414,7 +448,7 @@ class IntelligentDigestService {
       const event = entry.rawData;
       analysis.relevanceScore = geopoliticalIntelligenceService.calculateRelevance(event);
       analysis.summary = event.title;
-      analysis.entities.tickers = geopoliticalIntelligenceService.extractRelevantTickers(`${event.title} ${event.content}`);
+      analysis.entities.tickers = this.filterTickers(geopoliticalIntelligenceService.extractRelevantTickers(`${event.title} ${event.content}`));
       analysis.tags = ['geopolitical', event.category, event.region];
       analysis.importance = analysis.relevanceScore >= 85 ? 'critical' : 'high';
       analysis.sentiment = geopoliticalIntelligenceService.determineSentiment(event);
@@ -424,7 +458,7 @@ class IntelligentDigestService {
       const announcement = entry.rawData;
       analysis.relevanceScore = earningsMAService.calculateRelevance(announcement);
       analysis.summary = announcement.title;
-      analysis.entities.tickers = earningsMAService.extractTickers(`${announcement.title} ${announcement.content}`);
+      analysis.entities.tickers = this.filterTickers(earningsMAService.extractTickers(`${announcement.title} ${announcement.content}`));
       analysis.tags = ['earnings', announcement.category];
       analysis.importance = analysis.relevanceScore >= 85 ? 'critical' : 'high';
       analysis.sentiment = earningsMAService.determineSentiment(announcement);
@@ -434,7 +468,7 @@ class IntelligentDigestService {
       const data = entry.rawData;
       analysis.relevanceScore = manufacturingSupplyChainService.calculateRelevance(data);
       analysis.summary = data.title;
-      analysis.entities.tickers = manufacturingSupplyChainService.extractRelevantTickers(`${data.title} ${data.content}`);
+      analysis.entities.tickers = this.filterTickers(manufacturingSupplyChainService.extractRelevantTickers(`${data.title} ${data.content}`));
       analysis.tags = ['manufacturing', data.category];
       analysis.importance = analysis.relevanceScore >= 75 ? 'high' : 'medium';
       analysis.sentiment = manufacturingSupplyChainService.determineSentiment(data);
@@ -444,7 +478,7 @@ class IntelligentDigestService {
       const mention = entry.rawData;
       analysis.relevanceScore = expandedSocialService.calculateRelevance(mention);
       analysis.summary = mention.title;
-      analysis.entities.tickers = expandedSocialService.extractTickers(`${mention.title} ${mention.content}`);
+      analysis.entities.tickers = this.filterTickers(expandedSocialService.extractTickers(`${mention.title} ${mention.content}`));
       analysis.tags = ['social', mention.platform];
       analysis.importance = analysis.relevanceScore >= 60 ? 'medium' : 'low';
       analysis.sentiment = expandedSocialService.determineSentiment(mention);
@@ -454,7 +488,7 @@ class IntelligentDigestService {
       const news = entry.rawData;
       analysis.relevanceScore = localBusinessService.calculateRelevance(news);
       analysis.summary = news.title;
-      analysis.entities.tickers = localBusinessService.extractTickers(`${news.title} ${news.content}`);
+      analysis.entities.tickers = this.filterTickers(localBusinessService.extractTickers(`${news.title} ${news.content}`));
       analysis.tags = ['local_business', news.city];
       analysis.importance = analysis.relevanceScore >= 70 ? 'high' : 'medium';
       analysis.sentiment = localBusinessService.determineSentiment(news);
@@ -465,7 +499,7 @@ class IntelligentDigestService {
       analysis.relevanceScore = tech.signals.length * 15;
       analysis.summary = `${tech.ticker} technical signals: ${tech.signals.join(', ')}`;
       analysis.tags = ['technical', ...tech.signals.map((s: string) => s.split(' ')[0].toLowerCase())];
-      analysis.entities.tickers = [tech.ticker];
+      analysis.entities.tickers = this.filterTickers([tech.ticker]);
       analysis.importance = tech.overallSignal === 'bullish' || tech.overallSignal === 'bearish' ? 'high' : 'medium';
       analysis.sentiment = tech.overallSignal;
     }
