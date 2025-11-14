@@ -40,6 +40,7 @@ import enhancedDeepDiveRoutes from './routes/enhancedDeepDiveRoutes.js';
 import aiTipTrackerAnalyticsRoutes from './routes/aiTipTrackerAnalyticsRoutes.js';
 import intelligenceThreadsRoutes from './routes/intelligenceThreadsRoutes.js';
 import autoTipTrackerRoutes from './routes/autoTipTrackerRoutes.js';
+import opportunitiesRoutes from './routes/opportunities.js';
 
 dotenv.config();
 
@@ -149,6 +150,7 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/intelligence', intelligenceRoutes);
 app.use('/api/intelligence', dailyIntelligenceRoutes);
 app.use('/api/opportunities', tradingOpportunitiesRoutes);
+app.use('/api/opportunities', opportunitiesRoutes); // NEW: SEC EDGAR scanner
 app.use('/api/data', dataRoutes);
 app.use('/api/digest', digestRoutes);
 app.use('/api/digest', digestCleanupRoutes);
@@ -327,6 +329,11 @@ API Endpoints:
   
   🎯 AI Trading Signals:
   GET  /api/opportunities/signals        - Get trading opportunities
+  
+  🔍 Opportunity Scanner (NEW):
+  GET  /api/opportunities/summary        - IPO/SPAC counts
+  GET  /api/opportunities/recent         - Latest SEC filings
+  POST /api/opportunities/ingest         - Manual SEC scan
   
   💰 AI Tip Tracker:
   GET  /api/tip-tracker/summary          - Dashboard summary
