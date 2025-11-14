@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import signalGeneratorService from '../services/signalGeneratorService.js';
 import priceUpdaterService from '../services/priceUpdaterService.js';
+import performanceAnalysisService from '../services/performanceAnalysisService.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -16,7 +17,7 @@ router.post('/generate-signals', authenticateToken, async (req, res) => {
       success: true, 
       signals, 
       count: signals.length,
-      message: `Generated ${signals.length} signals with REAL prices`
+      message: `Generated ${signals.length} signals with REAL prices and historical insights`
     });
   } catch (error: any) {
     console.error('Signal generation failed:', error);
@@ -45,6 +46,26 @@ router.get('/signals', async (req, res) => {
       success: false,
       error: 'Failed to get signals', 
       message: error.message 
+    });
+  }
+});
+
+// Get performance analysis
+router.get('/performance-analysis', async (req, res) => {
+  try {
+    console.log('📊 Analyzing performance...');
+    const analysis = await performanceAnalysisService.analyzeAllSignals();
+    
+    res.json({
+      success: true,
+      analysis
+    });
+  } catch (error: any) {
+    console.error('Performance analysis failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Performance analysis failed',
+      message: error.message
     });
   }
 });

@@ -63,6 +63,12 @@ class SignalGeneratorService {
     console.log('\n🤖 === GENERATING DAILY AI SIGNALS ===\n');
     
     try {
+      // Step 0: Learn from past performance
+      console.log('🧠 Step 0: Learning from past performance...');
+      const performanceAnalysisService = (await import('./performanceAnalysisService.js')).default;
+      const historicalInsights = await performanceAnalysisService.getInsightsForPrompt();
+      console.log('✓ Loaded historical insights\n');
+
       // Step 1: Fetch recent high-relevance digest entries
       console.log('📊 Step 1: Fetching high-quality digest entries...');
       const entries = await pool.query(`
@@ -91,9 +97,9 @@ class SignalGeneratorService {
         return [];
       }
 
-      // Step 2: Send to Claude for analysis
-      console.log('🧠 Step 2: Analyzing with Claude AI...');
-      const analysisPrompt = this.buildAnalysisPrompt(entries.rows);
+      // Step 2: Send to Claude for analysis WITH historical insights
+      console.log('🧠 Step 2: Analyzing with Claude AI (with performance insights)...');
+      const analysisPrompt = this.buildAnalysisPrompt(entries.rows, historicalInsights);
       
       const message = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
@@ -155,26 +161,38 @@ class SignalGeneratorService {
   }
 
   /**
-   * Build analysis prompt for Claude
+   * Build analysis prompt for Claude with historical performance insights
    */
-  private buildAnalysisPrompt(entries: any[]): string {
+  private buildAnalysisPrompt(entries: any[], historicalInsights: string): string {
     const entriesText = entries.map(e => 
       `[${e.source_type}] ${e.ai_summary} | Tickers: ${(e.tickers || []).join(', ')} | Sentiment: ${e.ai_sentiment} | Score: ${e.ai_relevance_score}`
     ).join('\n');
 
     return `You are a professional stock analyst analyzing market intelligence data to identify the 5 BEST trading opportunities for the next 1-7 days.
 
+${historicalInsights}
+
 MARKET INTELLIGENCE DATA (Last 7 Days):
 ${entriesText}
 
-TASK: Identify the top 5 trading opportunities with the HIGHEST conviction based on this intelligence.
+TASK: Identify the top 5 trading opportunities with the HIGHEST conviction based on:
+1. The market intelligence data above
+2. The historical performance patterns (what worked, what failed)
+3. Your understanding of what makes winning opportunities
+
+CRITICAL REQUIREMENTS:
+- ONLY recommend opportunities that match our winning patterns
+- AVOID patterns that historically failed
+- Aim for 70%+ win rate by being highly selective
+- Focus on high-probability setups similar to past winners
+- Consider sector performance from historical data
 
 For each opportunity, provide:
 1. Ticker symbol (e.g., AAPL, NVDA)
 2. Company name
 3. Action: BUY, SELL, or WATCH
-4. Confidence: 0-100 (only recommend if >70)
-5. Reasoning: 2-3 sentences explaining WHY this is an opportunity NOW
+4. Confidence: 0-100 (only recommend if >75, aim for 80+)
+5. Reasoning: 2-3 sentences explaining WHY this is an opportunity NOW and HOW it matches our winning patterns
 6. Catalysts: 2-4 specific upcoming events or factors
 7. Predicted gain %: Your estimate for next 7 days
 8. Risk factors: 2-3 key risks
@@ -184,7 +202,9 @@ Focus on:
 - Strong directional conviction (clear BUY or SELL thesis)
 - Timely catalysts happening soon
 - Clear risk/reward setup
-- Actionable opportunities backed by the intelligence data
+- Patterns that match our historical winners
+- Avoiding patterns that match our historical losers
+- Sectors that have performed well historically
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -194,7 +214,7 @@ Respond ONLY with valid JSON in this exact format:
       "companyName": "Apple Inc.",
       "action": "BUY",
       "confidence": 85,
-      "reasoning": "Strong iPhone demand in China plus new AI features announcement creates bullish setup.",
+      "reasoning": "Strong iPhone demand in China plus new AI features announcement creates bullish setup. Matches our winning pattern of tech leaders with upcoming catalysts.",
       "catalysts": ["Earnings in 2 days", "New product launch", "Analyst upgrades"],
       "predictedGainPct": 5.2,
       "riskFactors": ["Market volatility", "Supply chain concerns"],
@@ -205,9 +225,10 @@ Respond ONLY with valid JSON in this exact format:
 
 IMPORTANT: 
 - Return EXACTLY 5 signals (no more, no less)
-- Only include tickers you have HIGH conviction on (confidence >70)
+- Only include tickers you have HIGH conviction on (confidence >75)
 - Be specific about catalysts with actual dates/events when possible
-- Base predictions on the intelligence data provided`;
+- Base predictions on the intelligence data AND historical performance patterns
+- Reference why this matches our winning patterns in the reasoning`;
   }
 
   /**
