@@ -1,23 +1,26 @@
 // backend/src/routes/intelligence.ts
+// Phase 2: Added Executive Vetting Endpoints
+
 import { Router } from 'express';
 import signalGeneratorService from '../services/signalGeneratorService.js';
 import priceUpdaterService from '../services/priceUpdaterService.js';
 import performanceAnalysisService from '../services/performanceAnalysisService.js';
+import executiveVettingService from '../services/executiveVettingService.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
 
-// Generate fresh AI signals (saves to database automatically)
+// Generate fresh AI signals WITH EXECUTIVE VETTING (Phase 2)
 router.post('/generate-signals', authenticateToken, async (req, res) => {
   try {
-    console.log('🚀 Generating AI signals...');
+    console.log('🚀 Generating AI signals with Phase 2 executive vetting...');
     const signals = await signalGeneratorService.generateDailySignals();
     
     res.json({ 
       success: true, 
       signals, 
       count: signals.length,
-      message: `Generated ${signals.length} signals with REAL prices and historical insights`
+      message: `Generated ${signals.length} signals with executive vetting + REAL prices (Phase 2)`
     });
   } catch (error: any) {
     console.error('Signal generation failed:', error);
@@ -46,6 +49,62 @@ router.get('/signals', async (req, res) => {
       success: false,
       error: 'Failed to get signals', 
       message: error.message 
+    });
+  }
+});
+
+// NEW: Vet executives for a specific ticker
+router.get('/vet-executives/:ticker', async (req, res) => {
+  try {
+    const ticker = req.params.ticker.toUpperCase();
+    console.log(`👔 Vetting executives for ${ticker}...`);
+    
+    const vetting = await executiveVettingService.vetExecutives(ticker);
+    
+    res.json({
+      success: true,
+      ticker,
+      vetting
+    });
+  } catch (error: any) {
+    console.error(`Failed to vet ${req.params.ticker}:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Executive vetting failed',
+      message: error.message
+    });
+  }
+});
+
+// NEW: Batch vet multiple tickers
+router.post('/vet-executives-batch', authenticateToken, async (req, res) => {
+  try {
+    const { tickers } = req.body;
+    
+    if (!tickers || !Array.isArray(tickers)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request',
+        message: 'tickers array required'
+      });
+    }
+    
+    console.log(`👔 Batch vetting ${tickers.length} tickers...`);
+    const results = await executiveVettingService.batchVet(tickers);
+    
+    const vettings = Object.fromEntries(results);
+    
+    res.json({
+      success: true,
+      count: tickers.length,
+      vettings
+    });
+  } catch (error: any) {
+    console.error('Batch vetting failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Batch vetting failed',
+      message: error.message
     });
   }
 });
@@ -143,6 +202,8 @@ router.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     service: 'intelligence',
+    phase: 2,
+    features: ['performance-feedback', 'executive-vetting'],
     timestamp: new Date().toISOString()
   });
 });
