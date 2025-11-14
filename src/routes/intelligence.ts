@@ -1,6 +1,7 @@
 // backend/src/routes/intelligence.ts
 import { Router } from 'express';
 import signalGeneratorService from '../services/signalGeneratorService.js';
+import priceUpdaterService from '../services/priceUpdaterService.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -44,6 +45,74 @@ router.get('/signals', async (req, res) => {
       success: false,
       error: 'Failed to get signals', 
       message: error.message 
+    });
+  }
+});
+
+// Update prices for all open positions
+router.post('/update-prices', authenticateToken, async (req, res) => {
+  try {
+    console.log('💰 Manual price update triggered');
+    const result = await priceUpdaterService.updateAllOpenPositions();
+    
+    res.json({
+      success: true,
+      updated: result.updated,
+      failed: result.failed,
+      stats: result.stats,
+      message: `Updated ${result.updated} positions, ${result.failed} failed`
+    });
+  } catch (error: any) {
+    console.error('Price update failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Price update failed',
+      message: error.message
+    });
+  }
+});
+
+// Update price for single ticker
+router.post('/update-ticker/:ticker', authenticateToken, async (req, res) => {
+  try {
+    const ticker = req.params.ticker;
+    const success = await priceUpdaterService.updateSingleTicker(ticker);
+    
+    if (success) {
+      res.json({
+        success: true,
+        message: `Updated ${ticker} successfully`
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: `Failed to update ${ticker}`
+      });
+    }
+  } catch (error: any) {
+    console.error(`Failed to update ticker:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Update failed',
+      message: error.message
+    });
+  }
+});
+
+// Get update status
+router.get('/update-status', async (req, res) => {
+  try {
+    const status = await priceUpdaterService.getUpdateStatus();
+    res.json({
+      success: true,
+      status
+    });
+  } catch (error: any) {
+    console.error('Failed to get update status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get status',
+      message: error.message
     });
   }
 });
