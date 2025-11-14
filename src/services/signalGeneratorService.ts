@@ -74,7 +74,6 @@ class SignalGeneratorService {
           ai_relevance_score,
           ai_sentiment,
           tickers,
-          tags,
           event_date
         FROM digest_entries
         WHERE 
