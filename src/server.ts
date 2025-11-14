@@ -9,6 +9,7 @@ import { authenticateToken } from './middleware/auth.js';
 // Services
 import scheduledIngestionService from './services/scheduledIngestionService.js';
 import marketDataService from './services/marketDataService.js';
+import calendarScheduler from './schedulers/calendarScheduler.js';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -328,8 +329,8 @@ API Endpoints:
   GET  /api/opportunities/signals        - Get trading opportunities
   
   💰 AI Tip Tracker:
-  GET  /api/tip-tracker/summary          - NEW! Dashboard summary
-  POST /api/tip-tracker/update-prices    - NEW! Update all prices
+  GET  /api/tip-tracker/summary          - Dashboard summary
+  POST /api/tip-tracker/update-prices    - Update all prices
   GET  /api/ai-tip-tracker/summary       - Performance summary
   GET  /api/ai-tip-tracker/positions/open - Open positions
   GET  /api/ai-tip-tracker/positions/closed - Closed positions
@@ -350,11 +351,19 @@ API Endpoints:
   GET  /api/threads                      - Get all threads
   GET  /api/threads/:id                  - Get thread by ID
   PUT  /api/threads/:id/status           - Update thread status
+  
+  📅 Economic Calendar:
+  GET  /api/calendar/upcoming            - Next 7 days events
+  POST /api/calendar/fetch               - Manual update from Finnhub
   `);
   
   // Start scheduled ingestion service
-  console.log('🔄 Starting scheduled ingestion service...');
+  console.log('📄 Starting scheduled ingestion service...');
   scheduledIngestionService.start();
+
+  // Start calendar scheduler
+  console.log('📅 Starting economic calendar scheduler...');
+  calendarScheduler.start();
 
   // Start auto tip tracker
   console.log('🎯 Starting auto tip tracker...');
