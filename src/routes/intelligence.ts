@@ -1,26 +1,26 @@
 // backend/src/routes/intelligence.ts
-// Phase 2: Added Executive Vetting Endpoints
+// Phase 3: Comprehensive 8-Dimension Business Analysis
 
 import { Router } from 'express';
 import signalGeneratorService from '../services/signalGeneratorService.js';
 import priceUpdaterService from '../services/priceUpdaterService.js';
 import performanceAnalysisService from '../services/performanceAnalysisService.js';
-import executiveVettingService from '../services/executiveVettingService.js';
+import comprehensiveAnalysis from '../services/comprehensiveBusinessAnalysis.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
 
-// Generate fresh AI signals WITH EXECUTIVE VETTING (Phase 2)
+// Generate fresh AI signals WITH COMPREHENSIVE ANALYSIS (Phase 3)
 router.post('/generate-signals', authenticateToken, async (req, res) => {
   try {
-    console.log('🚀 Generating AI signals with Phase 2 executive vetting...');
+    console.log('🚀 Generating AI signals with Phase 3 comprehensive analysis...');
     const signals = await signalGeneratorService.generateDailySignals();
     
     res.json({ 
       success: true, 
       signals, 
       count: signals.length,
-      message: `Generated ${signals.length} signals with executive vetting + REAL prices (Phase 2)`
+      message: `Generated ${signals.length} signals with 8-dimension analysis + REAL prices (Phase 3)`
     });
   } catch (error: any) {
     console.error('Signal generation failed:', error);
@@ -53,31 +53,31 @@ router.get('/signals', async (req, res) => {
   }
 });
 
-// NEW: Vet executives for a specific ticker
-router.get('/vet-executives/:ticker', async (req, res) => {
+// NEW: Comprehensive analysis for a specific ticker
+router.get('/analyze/:ticker', async (req, res) => {
   try {
     const ticker = req.params.ticker.toUpperCase();
-    console.log(`👔 Vetting executives for ${ticker}...`);
+    console.log(`🔍 Comprehensive analysis for ${ticker}...`);
     
-    const vetting = await executiveVettingService.vetExecutives(ticker);
+    const analysis = await comprehensiveAnalysis.analyzeCompany(ticker);
     
     res.json({
       success: true,
       ticker,
-      vetting
+      analysis
     });
   } catch (error: any) {
-    console.error(`Failed to vet ${req.params.ticker}:`, error);
+    console.error(`Failed to analyze ${req.params.ticker}:`, error);
     res.status(500).json({
       success: false,
-      error: 'Executive vetting failed',
+      error: 'Analysis failed',
       message: error.message
     });
   }
 });
 
-// NEW: Batch vet multiple tickers
-router.post('/vet-executives-batch', authenticateToken, async (req, res) => {
+// NEW: Batch analyze multiple tickers
+router.post('/analyze-batch', authenticateToken, async (req, res) => {
   try {
     const { tickers } = req.body;
     
@@ -89,21 +89,21 @@ router.post('/vet-executives-batch', authenticateToken, async (req, res) => {
       });
     }
     
-    console.log(`👔 Batch vetting ${tickers.length} tickers...`);
-    const results = await executiveVettingService.batchVet(tickers);
+    console.log(`🔍 Batch analyzing ${tickers.length} tickers...`);
+    const results = await comprehensiveAnalysis.batchAnalyze(tickers);
     
-    const vettings = Object.fromEntries(results);
+    const analyses = Object.fromEntries(results);
     
     res.json({
       success: true,
       count: tickers.length,
-      vettings
+      analyses
     });
   } catch (error: any) {
-    console.error('Batch vetting failed:', error);
+    console.error('Batch analysis failed:', error);
     res.status(500).json({
       success: false,
-      error: 'Batch vetting failed',
+      error: 'Batch analysis failed',
       message: error.message
     });
   }
@@ -202,8 +202,18 @@ router.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     service: 'intelligence',
-    phase: 2,
-    features: ['performance-feedback', 'executive-vetting'],
+    phase: 3,
+    features: [
+      'performance-feedback', 
+      'comprehensive-8d-analysis',
+      'executive-quality',
+      'business-moat',
+      'financial-strength',
+      'growth-potential',
+      'valuation',
+      'catalysts',
+      'risk-assessment'
+    ],
     timestamp: new Date().toISOString()
   });
 });

@@ -1,5 +1,5 @@
-// backend/src/services/signalGeneratorServicePhase2.ts
-// Phase 2: Enhanced with Executive Team Vetting
+// backend/src/services/signalGeneratorServicePhase3.ts
+// Phase 3: Enhanced with Comprehensive 8-Dimension Business Analysis
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Pool } from 'pg';
@@ -29,11 +29,11 @@ interface Signal {
   riskFactors: string[];
   timeHorizon: string;
   digestEntryIds: number[];
-  executiveScore?: number;  // NEW
-  executiveVetting?: any;   // NEW
+  analysisScore?: number;
+  analysis?: any;
 }
 
-class SignalGeneratorServicePhase2 {
+class SignalGeneratorServicePhase3 {
   /**
    * Get REAL current stock price from Alpha Vantage
    */
@@ -44,7 +44,7 @@ class SignalGeneratorServicePhase2 {
       
       const quote = response.data['Global Quote'];
       if (!quote || !quote['05. price']) {
-        console.log(`⚠️ No price data for ${ticker}`);
+        console.log(`  ⚠️ No price data for ${ticker}`);
         return null;
       }
       
@@ -59,10 +59,10 @@ class SignalGeneratorServicePhase2 {
   }
 
   /**
-   * Generate AI trading signals with executive vetting
+   * Generate AI trading signals with comprehensive business analysis
    */
   async generateDailySignals(): Promise<Signal[]> {
-    console.log('\n🤖 === GENERATING AI SIGNALS (PHASE 2: WITH EXECUTIVE VETTING) ===\n');
+    console.log('\n🤖 === GENERATING AI SIGNALS (PHASE 3: COMPREHENSIVE ANALYSIS) ===\n');
     
     try {
       // Step 0: Learn from past performance
@@ -123,53 +123,66 @@ class SignalGeneratorServicePhase2 {
       const initialSignals = this.parseClaudeResponse(responseText, entries.rows);
       console.log(`✓ Extracted ${initialSignals.length} initial signals\n`);
 
-      // Step 3.5: VET EXECUTIVES (NEW - PHASE 2)
-      console.log('👔 Step 3.5: Vetting executive teams (PHASE 2)...');
-      const executiveVettingService = (await import('./executiveVettingService.js')).default;
+      // Step 3.5: COMPREHENSIVE BUSINESS ANALYSIS (NEW - PHASE 3)
+      console.log('🔍 Step 3.5: Comprehensive 8-dimension analysis (PHASE 3)...');
+      const comprehensiveAnalysis = (await import('./comprehensiveBusinessAnalysis.js')).default;
       
-      const vettedSignals: Signal[] = [];
+      const analyzedSignals: Signal[] = [];
       const rejectedSignals: string[] = [];
       
       for (const signal of initialSignals) {
-        console.log(`\n  Vetting ${signal.ticker}...`);
-        const vetting = await executiveVettingService.vetExecutives(signal.ticker);
+        console.log(`\n  Analyzing ${signal.ticker}...`);
         
-        // Filter threshold: 60/100 (realistic for Phase 2)
-        if (vetting.overallScore >= 60) {
-          console.log(`  ✅ ${signal.ticker}: ${vetting.overallScore}/100 - APPROVED`);
+        try {
+          const analysis = await comprehensiveAnalysis.analyzeCompany(signal.ticker, historicalInsights);
           
-          // Enhance reasoning with executive quality
-          const enhancedReasoning = `${signal.reasoning} Executive Quality (${vetting.overallScore}/100): ${vetting.recommendation}`;
-          
-          vettedSignals.push({
+          // Filter threshold: 65/100 (quality companies)
+          if (analysis.overallScore >= 65) {
+            console.log(`  ✅ ${signal.ticker}: ${analysis.overallScore}/100 - APPROVED`);
+            console.log(`     Business Quality: ${analysis.businessQuality.score}/${analysis.businessQuality.maxScore}`);
+            console.log(`     ${analysis.recommendation}`);
+            
+            // Enhance reasoning with comprehensive analysis
+            const enhancedReasoning = `${signal.reasoning}\n\nCOMPREHENSIVE ANALYSIS (${analysis.overallScore}/100): ${analysis.investmentThesis} ${analysis.comparison}`;
+            
+            analyzedSignals.push({
+              ...signal,
+              reasoning: enhancedReasoning,
+              analysisScore: analysis.overallScore,
+              analysis: analysis
+            });
+          } else {
+            console.log(`  ❌ ${signal.ticker}: ${analysis.overallScore}/100 - REJECTED (quality score below 65)`);
+            console.log(`     Concerns: ${analysis.concerns.slice(0, 2).join(', ')}`);
+            rejectedSignals.push(`${signal.ticker} (score: ${analysis.overallScore})`);
+          }
+        } catch (error) {
+          console.log(`  ⚠️ ${signal.ticker}: Analysis failed, including with caution`);
+          // Include signal even if analysis fails (don't lose good opportunities due to API issues)
+          analyzedSignals.push({
             ...signal,
-            reasoning: enhancedReasoning,
-            executiveScore: vetting.overallScore,
-            executiveVetting: vetting
+            analysisScore: 70 // Neutral score for failed analysis
           });
-        } else {
-          console.log(`  ❌ ${signal.ticker}: ${vetting.overallScore}/100 - REJECTED (management quality below 60)`);
-          rejectedSignals.push(`${signal.ticker} (score: ${vetting.overallScore})`);
         }
         
         // Rate limiting
-        await this.sleep(2000);
+        await this.sleep(3000);
       }
       
-      console.log(`\n✓ Executive vetting complete`);
-      console.log(`  Approved: ${vettedSignals.length}`);
+      console.log(`\n✓ Comprehensive analysis complete`);
+      console.log(`  Approved: ${analyzedSignals.length}`);
       console.log(`  Rejected: ${rejectedSignals.length}${rejectedSignals.length > 0 ? ` (${rejectedSignals.join(', ')})` : ''}\n`);
 
       // If we rejected too many, we might need more signals
-      if (vettedSignals.length < 3) {
-        console.log('⚠️ Warning: Less than 3 signals passed executive vetting');
+      if (analyzedSignals.length < 3) {
+        console.log('⚠️ Warning: Less than 3 signals passed comprehensive analysis');
       }
 
       // Step 4: Get REAL prices and calculate shares
       console.log('💰 Step 4: Fetching REAL market prices...');
       const signalsWithPrices: Signal[] = [];
       
-      for (const signal of vettedSignals) {
+      for (const signal of analyzedSignals) {
         const realPrice = await this.getRealStockPrice(signal.ticker);
         
         if (realPrice) {
@@ -186,7 +199,7 @@ class SignalGeneratorServicePhase2 {
         await this.sleep(12000); // Alpha Vantage rate limit
       }
 
-      console.log(`\n✅ Generated ${signalsWithPrices.length} signals with executive vetting + REAL prices\n`);
+      console.log(`\n✅ Generated ${signalsWithPrices.length} signals with comprehensive analysis + REAL prices\n`);
       
       // Step 5: Save to tip tracker
       console.log('💾 Step 5: Saving to AI Tip Tracker...');
@@ -225,12 +238,15 @@ TASK: Identify the top 5 trading opportunities with the HIGHEST conviction based
 
 CRITICAL REQUIREMENTS:
 - ONLY recommend opportunities that match our winning patterns
-- AVOID patterns that historically failed (especially Healthcare has 83% win rate - prioritize it!)
+- PRIORITIZE Healthcare sector (83% historical win rate!)
+- Focus on high-quality businesses (will be comprehensively analyzed next)
 - Aim for 70%+ win rate by being highly selective
 - Focus on high-probability setups similar to past winners (AAPL, PLTR, JBHT)
-- Consider sector performance from historical data
 
-NOTE: These signals will undergo executive team vetting next. Companies with poor management will be filtered out.
+NOTE: These signals will undergo comprehensive 8-dimension business analysis including:
+- Executive quality, business moat, financial strength, industry position
+- Growth potential, valuation, catalysts, and risks
+- Companies with weak fundamentals will be filtered out
 
 For each opportunity, provide:
 1. Ticker symbol (e.g., AAPL, NVDA)
@@ -249,7 +265,7 @@ Focus on:
 - Clear risk/reward setup
 - Patterns that match our historical winners (especially Healthcare 83% win rate)
 - Avoiding patterns that match our historical losers
-- Large cap companies with institutional support (better management)
+- Quality businesses with competitive advantages
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -259,7 +275,7 @@ Respond ONLY with valid JSON in this exact format:
       "companyName": "Apple Inc.",
       "action": "BUY",
       "confidence": 85,
-      "reasoning": "Strong iPhone demand in China plus new AI features announcement creates bullish setup. Matches our winning pattern of tech leaders with upcoming catalysts.",
+      "reasoning": "Strong iPhone demand in China plus new AI features announcement creates bullish setup. Matches our winning pattern of tech leaders with upcoming catalysts and strong moats.",
       "catalysts": ["Earnings in 2 days", "New product launch", "Analyst upgrades"],
       "predictedGainPct": 5.2,
       "riskFactors": ["Market volatility", "Supply chain concerns"],
@@ -273,7 +289,8 @@ IMPORTANT:
 - Only include tickers you have HIGH conviction on (confidence >75)
 - Be specific about catalysts with actual dates/events when possible
 - Base predictions on intelligence data AND historical performance patterns
-- Reference why this matches winning patterns in the reasoning`;
+- Reference why this matches winning patterns in the reasoning
+- Focus on QUALITY businesses that will pass comprehensive analysis`;
   }
 
   /**
@@ -336,7 +353,7 @@ IMPORTANT:
           ai_catalysts,
           ai_risk_factors,
           time_horizon,
-          executive_score,
+          analysis_score,
           created_by
         ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       `, [
@@ -354,11 +371,11 @@ IMPORTANT:
         JSON.stringify(signal.catalysts),
         JSON.stringify(signal.riskFactors),
         signal.timeHorizon,
-        signal.executiveScore || null,
-        'AI_SYSTEM'
+        signal.analysisScore || null,
+        'AI_SYSTEM_PHASE3'
       ]);
       
-      console.log(`  ✓ Saved ${signal.ticker} (Executive: ${signal.executiveScore}/100)`);
+      console.log(`  ✓ Saved ${signal.ticker} (Analysis: ${signal.analysisScore}/100)`);
       
     } catch (error: any) {
       console.error(`Failed to save ${signal.ticker}:`, error.message);
@@ -383,4 +400,4 @@ IMPORTANT:
   }
 }
 
-export default new SignalGeneratorServicePhase2();
+export default new SignalGeneratorServicePhase3();
