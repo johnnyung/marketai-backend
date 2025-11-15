@@ -1,5 +1,5 @@
 // backend/src/services/marketDataService.ts
-// Multi-API Market Data Service with automatic fallbacks
+// Multi-API Market Data Service with automatic fallbacks + cache
 import axios from 'axios';
 
 interface StockQuote {
@@ -15,16 +15,32 @@ interface StockQuote {
   source: string;
 }
 
+interface CacheEntry {
+  data: StockQuote;
+  timestamp: number;
+}
+
 class MarketDataService {
   private alphaVantageKey: string;
   private finnhubKey: string;
+  private cache: Map<string, CacheEntry>;
+  private cacheTimeout: number;
 
   constructor() {
     this.alphaVantageKey = process.env.ALPHA_VANTAGE_API_KEY || '';
     this.finnhubKey = process.env.FINNHUB_API_KEY || '';
+    this.cache = new Map();
+    this.cacheTimeout = 60 * 1000; // 60 seconds cache
   }
 
   async getStockPrice(symbol: string): Promise<StockQuote | null> {
+    // Check cache first
+    const cached = this.cache.get(symbol);
+    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      console.log(`✅ ${symbol}: $${cached.data.price} (CACHE)`);
+      return cached.data;
+    }
+
     const apis = [
       { name: 'Alpha Vantage', fn: () => this.getFromAlphaVantage(symbol) },
       { name: 'Finnhub', fn: () => this.getFromFinnhub(symbol) },
@@ -37,6 +53,13 @@ class MarketDataService {
         const result = await api.fn();
         if (result) {
           console.log(`✅ ${symbol}: $${result.price} (${api.name})`);
+          
+          // Cache the result
+          this.cache.set(symbol, {
+            data: result,
+            timestamp: Date.now()
+          });
+          
           return result;
         }
       } catch (error: any) {
@@ -158,6 +181,68 @@ class MarketDataService {
     }
 
     return results;
+  }
+
+  // Cache management methods
+  getCacheStats() {
+    return {
+      size: this.cache.size,
+      entries: Array.from(this.cache.keys()),
+      oldestEntry: this.getOldestCacheEntry()
+    };
+  }
+
+  private getOldestCacheEntry() {
+    let oldest: { symbol: string; age: number } | null = null;
+    const now = Date.now();
+
+    for (const [symbol, entry] of this.cache.entries()) {
+      const age = now - entry.timestamp;
+      if (!oldest || age > oldest.age) {
+        oldest = { symbol, age };
+      }
+    }
+
+    return oldest;
+  }
+
+  clearCache() {
+    const size = this.cache.size;
+    this.cache.clear();
+    console.log(`🗑️ Cleared ${size} cache entries`);
+    return { cleared: size };
+  }
+
+  // Clean old cache entries
+  cleanOldCache() {
+    const now = Date.now();
+    let cleaned = 0;
+
+    for (const [symbol, entry] of this.cache.entries()) {
+      if (now - entry.timestamp > this.cacheTimeout) {
+        this.cache.delete(symbol);
+        cleaned++;
+      }
+    }
+
+    if (cleaned > 0) {
+      console.log(`🧹 Cleaned ${cleaned} old cache entries`);
+    }
+
+    return { cleaned };
+  }
+
+  // Get current price from cache only (no API call)
+  getCachedPrice(symbol: string): StockQuote | null {
+    const cached = this.cache.get(symbol);
+    if (!cached) return null;
+    
+    // Return null if cache is expired
+    if (Date.now() - cached.timestamp > this.cacheTimeout) {
+      return null;
+    }
+
+    return cached.data;
   }
 }
 

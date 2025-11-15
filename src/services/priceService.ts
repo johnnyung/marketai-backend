@@ -1,37 +1,100 @@
 // backend/src/services/priceService.ts
-// Wrapper for marketDataService to match expected interface
-
-import marketDataService from './marketDataService.js';
+import marketDataService from './marketDataService';
 
 class PriceService {
   /**
-   * Get stock price - delegates to marketDataService
+   * Get current prices for multiple tickers
+   * Returns Map with ticker -> price (or null if failed)
    */
-  async getStockPrice(ticker: string): Promise<number | null> {
-    const priceData = await marketDataService.getStockPrice(ticker);
-    return priceData ? priceData.price : null;
-  }
-  
-  /**
-   * Get multiple prices - delegates to marketDataService
-   */
-  async getMultiplePrices(tickers: string[]): Promise<Map<string, number>> {
-    const pricesMap = await marketDataService.getMultiplePrices(tickers);
-    
-    // Convert Map<string, PriceData> to Map<string, number>
-    const result = new Map<string, number>();
-    for (const [ticker, priceData] of pricesMap.entries()) {
-      result.set(ticker, priceData.price);
+  async getCurrentPrices(tickers: string[]): Promise<Map<string, number | null>> {
+    const result = new Map<string, number | null>();
+
+    try {
+      const quotes = await marketDataService.getMultiplePrices(tickers);
+
+      for (const ticker of tickers) {
+        const priceData = quotes.get(ticker);
+        
+        // Handle null case properly
+        if (priceData && priceData.price) {
+          result.set(ticker, priceData.price);
+        } else {
+          result.set(ticker, null);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching prices:', error);
+      
+      // Return null for all tickers on error
+      for (const ticker of tickers) {
+        result.set(ticker, null);
+      }
+      
+      return result;
     }
-    
-    return result;
   }
-  
+
   /**
-   * Clear cache - delegates to marketDataService
+   * Get current price for a single ticker
    */
-  clearCache(): void {
-    marketDataService.clearCache();
+  async getCurrentPrice(ticker: string): Promise<number | null> {
+    try {
+      const quote = await marketDataService.getStockPrice(ticker);
+      return quote ? quote.price : null;
+    } catch (error) {
+      console.error(`Error fetching price for ${ticker}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get stock quote (alias for compatibility)
+   * Returns the full quote object from marketDataService
+   */
+  async getStockPrice(ticker: string) {
+    try {
+      return await marketDataService.getStockPrice(ticker);
+    } catch (error) {
+      console.error(`Error fetching stock quote for ${ticker}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get stock quote (another alias for compatibility)
+   */
+  async getStockQuote(ticker: string) {
+    return this.getStockPrice(ticker);
+  }
+
+  /**
+   * Clear the price cache
+   */
+  clearCache() {
+    return marketDataService.clearCache();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats() {
+    return marketDataService.getCacheStats();
+  }
+
+  /**
+   * Clean old cache entries
+   */
+  cleanOldCache() {
+    return marketDataService.cleanOldCache();
+  }
+
+  /**
+   * Get cached price without making API call
+   */
+  getCachedPrice(ticker: string) {
+    return marketDataService.getCachedPrice(ticker);
   }
 }
 

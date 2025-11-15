@@ -377,7 +377,7 @@ Respond with ONLY valid JSON (no markdown):
    * Get current price for ticker using real price service
    */
   private async getCurrentPrice(ticker: string): Promise<number | null> {
-    return await priceService.getStockPrice(ticker);
+      return await priceService.getCurrentPrice(ticker);
   }
 }
 

@@ -41,6 +41,7 @@ import aiTipTrackerAnalyticsRoutes from './routes/aiTipTrackerAnalyticsRoutes.js
 import intelligenceThreadsRoutes from './routes/intelligenceThreadsRoutes.js';
 import autoTipTrackerRoutes from './routes/autoTipTrackerRoutes.js';
 import opportunitiesRoutes from './routes/opportunities.js';
+import systemRoutes from './routes/system.js';
 
 dotenv.config();
 
@@ -163,6 +164,7 @@ app.use('/api/vetting', tickerVettingRoutes);
 app.use('/api/cache', cacheRoutes);
 app.use('/api/ai-tip-tracker/analytics', aiTipTrackerAnalyticsRoutes);
 app.use('/api/auto-tip-tracker', autoTipTrackerRoutes);
+app.use('/api/system', systemRoutes);
 
 // ========================================
 // MARKET DATA TEST ENDPOINTS
