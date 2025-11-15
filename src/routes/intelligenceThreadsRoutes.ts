@@ -1,4 +1,4 @@
-// backend/src/routes/intelligenceThreads.ts
+// backend/src/routes/intelligenceThreadsRoutes.ts
 import { Router } from 'express';
 import { Pool } from 'pg';
 import Anthropic from '@anthropic-ai/sdk';
@@ -19,8 +19,17 @@ router.post('/generate', async (req, res) => {
     console.log('🧵 Starting thread generation...');
 
     // Step 1: Get recent high-quality digest entries
+    // FIXED: Use correct column names (ai_summary, source_name, etc.)
     const digestResult = await pool.query(`
-      SELECT id, title, summary, content, source, tickers, ai_relevance_score, ai_sentiment, created_at
+      SELECT 
+        id, 
+        source_name, 
+        ai_summary, 
+        source_type,
+        tickers, 
+        ai_relevance_score, 
+        ai_sentiment, 
+        created_at
       FROM digest_entries
       WHERE ai_relevance_score >= 7
         AND created_at >= NOW() - INTERVAL '7 days'
@@ -41,7 +50,7 @@ router.post('/generate', async (req, res) => {
 
     // Step 2: Ask Claude to identify related events/threads
     const entrySummaries = entries.map((e, i) => 
-      `${i + 1}. [Score: ${e.ai_relevance_score}/10] ${e.title || 'Untitled'}\n   Tickers: ${e.tickers || 'None'}\n   Summary: ${e.summary?.substring(0, 200) || e.content?.substring(0, 200)}`
+      `${i + 1}. [Score: ${e.ai_relevance_score}/10] ${e.source_name}\n   Tickers: ${e.tickers || 'None'}\n   Summary: ${e.ai_summary?.substring(0, 200) || 'No summary'}`
     ).join('\n\n');
 
     const message = await anthropic.messages.create({
