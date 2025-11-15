@@ -1,6 +1,6 @@
 // backend/src/services/comprehensiveBusinessAnalysis.ts
-// Phase 3: Complete 8-Dimension Investment Analysis
-// Inspired by Buffett, Cathie Wood, Ackman methodologies
+// Phase 3: Comprehensive 8-Dimension Business Analysis
+// UPDATED: Uses NEW FMP API v4 endpoints (post-August 2025)
 
 import Anthropic from '@anthropic-ai/sdk';
 import axios from 'axios';
@@ -9,15 +9,13 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const FMP_API_KEY = process.env.FMP_API_KEY; // Financial Modeling Prep
-const FMP_BASE = 'https://financialmodelingprep.com/api/v3';
+const FMP_API_KEY = process.env.FMP_API_KEY;
+const FMP_BASE_URL = 'https://financialmodelingprep.com/api';
 
 interface ComprehensiveAnalysis {
   ticker: string;
   overallScore: number;
   recommendation: string;
-  
-  // 8 Dimensions
   executiveQuality: DimensionScore;
   businessQuality: DimensionScore;
   financialStrength: DimensionScore;
@@ -26,8 +24,6 @@ interface ComprehensiveAnalysis {
   valuation: DimensionScore;
   catalysts: DimensionScore;
   riskAssessment: DimensionScore;
-  
-  // Summary
   strengths: string[];
   concerns: string[];
   investmentThesis: string;
@@ -41,504 +37,541 @@ interface DimensionScore {
   details: string[];
 }
 
-class ComprehensiveBusinessAnalysisService {
+class ComprehensiveBusinessAnalysis {
   /**
-   * Analyze a company across all 8 dimensions
+   * NEW FMP API: Get company profile
+   * v4 endpoint: /v4/company-profile
    */
-  async analyzeCompany(ticker: string, historicalContext?: string): Promise<ComprehensiveAnalysis> {
-    console.log(`\n🔍 === COMPREHENSIVE ANALYSIS: ${ticker} ===\n`);
-    
-    try {
-      // Step 1: Gather ALL available data
-      console.log('📊 Step 1: Gathering comprehensive data...');
-      const data = await this.gatherAllData(ticker);
-      
-      // Step 2: Use Claude to analyze each dimension
-      console.log('🧠 Step 2: AI analysis of all dimensions...');
-      const analysis = await this.performClaudeAnalysis(ticker, data, historicalContext);
-      
-      console.log(`✅ Analysis complete: ${analysis.overallScore}/100\n`);
-      return analysis;
-      
-    } catch (error) {
-      console.error(`❌ Analysis failed for ${ticker}:`, error);
-      throw error;
+  private async fetchFMPData(endpoint: string, version: string = 'v3'): Promise<any> {
+    if (!FMP_API_KEY) {
+      console.log('  ⚠️ FMP_API_KEY not configured, using general knowledge');
+      return null;
     }
-  }
-
-  /**
-   * Gather all available data from FMP and other sources
-   */
-  private async gatherAllData(ticker: string): Promise<any> {
-    const data: any = {
-      ticker,
-      hasData: false
-    };
 
     try {
-      // Company Profile
-      const profile = await this.fmpGet(`/profile/${ticker}`);
-      if (profile && profile[0]) {
-        data.profile = profile[0];
-        data.hasData = true;
-      }
-
-      // Key Executives
-      const executives = await this.fmpGet(`/key-executives/${ticker}`);
-      if (executives && executives.length > 0) {
-        data.executives = executives;
-      }
-
-      // Insider Trading (last 6 months)
-      const insiders = await this.fmpGet(`/insider-trading?symbol=${ticker}&limit=100`);
-      if (insiders && insiders.length > 0) {
-        data.insiders = insiders;
-      }
-
-      // Financial Ratios
-      const ratios = await this.fmpGet(`/ratios/${ticker}?limit=1`);
-      if (ratios && ratios[0]) {
-        data.ratios = ratios[0];
-      }
-
-      // Key Metrics
-      const metrics = await this.fmpGet(`/key-metrics/${ticker}?limit=1`);
-      if (metrics && metrics[0]) {
-        data.metrics = metrics[0];
-      }
-
-      // Financial Growth
-      const growth = await this.fmpGet(`/financial-growth/${ticker}?limit=1`);
-      if (growth && growth[0]) {
-        data.growth = growth[0];
-      }
-
-      // Income Statement
-      const income = await this.fmpGet(`/income-statement/${ticker}?limit=1`);
-      if (income && income[0]) {
-        data.income = income[0];
-      }
-
-      // Balance Sheet
-      const balance = await this.fmpGet(`/balance-sheet-statement/${ticker}?limit=1`);
-      if (balance && balance[0]) {
-        data.balance = balance[0];
-      }
-
-      // Cash Flow
-      const cashFlow = await this.fmpGet(`/cash-flow-statement/${ticker}?limit=1`);
-      if (cashFlow && cashFlow[0]) {
-        data.cashFlow = cashFlow[0];
-      }
-
-      // Institutional Holders
-      const institutional = await this.fmpGet(`/institutional-holder/${ticker}`);
-      if (institutional && institutional.length > 0) {
-        data.institutional = institutional.slice(0, 10);
-      }
-
-      console.log(`  ✓ Gathered data for ${ticker}`);
-      console.log(`    - Profile: ${data.profile ? 'Yes' : 'No'}`);
-      console.log(`    - Executives: ${data.executives ? data.executives.length : 0}`);
-      console.log(`    - Insiders: ${data.insiders ? data.insiders.length : 0}`);
-      console.log(`    - Financials: ${data.ratios ? 'Yes' : 'No'}`);
-
-      return data;
-
-    } catch (error) {
-      console.error(`Error gathering data:`, error);
-      return data;
-    }
-  }
-
-  /**
-   * Make FMP API request
-   */
-  private async fmpGet(endpoint: string): Promise<any> {
-    try {
-      const url = `${FMP_BASE}${endpoint}${endpoint.includes('?') ? '&' : '?'}apikey=${FMP_API_KEY}`;
-      const response = await axios.get(url);
+      const url = `${FMP_BASE_URL}/${version}${endpoint}`;
+      const params = endpoint.includes('?') 
+        ? `&apikey=${FMP_API_KEY}`
+        : `?apikey=${FMP_API_KEY}`;
+      
+      const response = await axios.get(`${url}${params}`, {
+        timeout: 10000
+      });
+      
       return response.data;
-    } catch (error) {
-      console.log(`  ⚠️ FMP request failed: ${endpoint}`);
+    } catch (error: any) {
+      console.log(`  ⚠️ FMP request failed: ${version}${endpoint}`);
+      if (error.response?.status === 403 || error.response?.status === 404) {
+        console.log(`     This endpoint may require a different FMP plan or has been deprecated`);
+      }
       return null;
     }
   }
 
   /**
-   * Use Claude to perform comprehensive analysis
+   * Gather comprehensive company data using NEW FMP v4 API
    */
-  private async performClaudeAnalysis(
-    ticker: string,
-    data: any,
-    historicalContext?: string
-  ): Promise<ComprehensiveAnalysis> {
+  private async gatherCompanyData(ticker: string): Promise<any> {
+    console.log('\n  Step 1: Gathering comprehensive data...');
     
-    // Build comprehensive prompt
-    const prompt = this.buildAnalysisPrompt(ticker, data, historicalContext);
+    const data: any = {
+      ticker,
+      profile: null,
+      quote: null,
+      executives: [],
+      insiders: [],
+      ratios: null,
+      metrics: null,
+      growth: null,
+      income: null,
+      balance: null,
+      cashflow: null,
+      institutional: null
+    };
+
+    // NEW v4 API: Company Overview (replaces old /profile)
+    // Try multiple endpoints since API structure changed
     
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
-    });
+    // Try v4 company-outlook (new comprehensive endpoint)
+    const outlook = await this.fetchFMPData(`/company-outlook?symbol=${ticker}`, 'v4');
+    if (outlook?.profile) {
+      data.profile = outlook.profile;
+      console.log(`    - Profile: Yes (v4)`);
+    }
+    
+    // Try v3 profile as fallback
+    if (!data.profile) {
+      const profileV3 = await this.fetchFMPData(`/profile/${ticker}`, 'v3');
+      if (profileV3 && Array.isArray(profileV3) && profileV3.length > 0) {
+        data.profile = profileV3[0];
+        console.log(`    - Profile: Yes (v3)`);
+      }
+    }
 
-    const responseText = message.content[0].type === 'text' 
-      ? message.content[0].text 
-      : '';
+    // Real-time quote (v3 - still works)
+    const quote = await this.fetchFMPData(`/quote/${ticker}`, 'v3');
+    if (quote && Array.isArray(quote) && quote.length > 0) {
+      data.quote = quote[0];
+      console.log(`    - Quote: Yes`);
+    }
 
-    // Parse Claude's analysis
-    return this.parseAnalysis(ticker, responseText);
+    // Key executives (v3 or v4)
+    const executives = await this.fetchFMPData(`/key-executives/${ticker}`, 'v3');
+    if (executives && Array.isArray(executives)) {
+      data.executives = executives.slice(0, 5);
+      console.log(`    - Executives: ${executives.length}`);
+    }
+
+    // Insider trading (v4 has new structure)
+    const insiders = await this.fetchFMPData(`/insider-trading?symbol=${ticker}&page=0`, 'v4');
+    if (insiders && Array.isArray(insiders)) {
+      data.insiders = insiders.slice(0, 10);
+      console.log(`    - Insiders: ${insiders.length}`);
+    }
+
+    // Financial ratios (TTM)
+    const ratios = await this.fetchFMPData(`/ratios-ttm/${ticker}`, 'v3');
+    if (ratios && Array.isArray(ratios) && ratios.length > 0) {
+      data.ratios = ratios[0];
+      console.log(`    - Ratios: Yes`);
+    }
+
+    // Key metrics (TTM)
+    const metrics = await this.fetchFMPData(`/key-metrics-ttm/${ticker}`, 'v3');
+    if (metrics && Array.isArray(metrics) && metrics.length > 0) {
+      data.metrics = metrics[0];
+      console.log(`    - Metrics: Yes`);
+    }
+
+    // Financial growth
+    const growth = await this.fetchFMPData(`/financial-growth/${ticker}?limit=1`, 'v3');
+    if (growth && Array.isArray(growth) && growth.length > 0) {
+      data.growth = growth[0];
+      console.log(`    - Growth: Yes`);
+    }
+
+    // Income statement (annual)
+    const income = await this.fetchFMPData(`/income-statement/${ticker}?limit=1`, 'v3');
+    if (income && Array.isArray(income) && income.length > 0) {
+      data.income = income[0];
+      console.log(`    - Income: Yes`);
+    }
+
+    // Balance sheet
+    const balance = await this.fetchFMPData(`/balance-sheet-statement/${ticker}?limit=1`, 'v3');
+    if (balance && Array.isArray(balance) && balance.length > 0) {
+      data.balance = balance[0];
+      console.log(`    - Balance: Yes`);
+    }
+
+    // Cash flow statement
+    const cashflow = await this.fetchFMPData(`/cash-flow-statement/${ticker}?limit=1`, 'v3');
+    if (cashflow && Array.isArray(cashflow) && cashflow.length > 0) {
+      data.cashflow = cashflow[0];
+      console.log(`    - Cashflow: Yes`);
+    }
+
+    // Institutional holders
+    const institutional = await this.fetchFMPData(`/institutional-holder/${ticker}`, 'v3');
+    if (institutional && Array.isArray(institutional)) {
+      data.institutional = institutional.slice(0, 10);
+      console.log(`    - Institutional: ${institutional.length}`);
+    }
+
+    console.log('  ✓ Data gathering complete\n');
+    return data;
   }
 
   /**
-   * Build comprehensive analysis prompt for Claude
+   * Comprehensive 8-dimension analysis
    */
-  private buildAnalysisPrompt(ticker: string, data: any, historicalContext?: string): string {
-    const dataText = this.formatDataForPrompt(data);
+  async analyzeCompany(ticker: string, historicalInsights?: string): Promise<ComprehensiveAnalysis> {
+    console.log(`\n🔍 === COMPREHENSIVE ANALYSIS: ${ticker} ===`);
     
-    return `You are a world-class investment analyst combining the methodologies of Warren Buffett (value + moat), Cathie Wood (innovation + disruption), and Bill Ackman (quality + catalysts).
+    try {
+      // Step 1: Gather data
+      const companyData = await this.gatherCompanyData(ticker);
 
-Analyze ${ticker} across 8 critical investment dimensions. Be RIGOROUS - only great companies should score 80+.
+      // Step 2: Build comprehensive prompt
+      console.log('  Step 2: Building analysis prompt...');
+      const prompt = this.buildAnalysisPrompt(ticker, companyData, historicalInsights);
 
-${historicalContext ? `\nHISTORICAL CONTEXT:\n${historicalContext}\n` : ''}
+      // Step 3: Get Claude's analysis
+      console.log('  Step 3: Running comprehensive AI analysis...\n');
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        temperature: 0.3,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
 
-COMPANY DATA:
-${dataText}
+      const responseText = message.content[0].type === 'text' 
+        ? message.content[0].text 
+        : '';
 
-TASK: Provide a comprehensive investment analysis scoring each dimension:
+      // Step 4: Parse response
+      console.log('  Step 4: Parsing analysis...');
+      const analysis = this.parseAnalysis(responseText, ticker);
+      
+      console.log(`\n✅ Analysis complete: ${analysis.overallScore}/100 - ${analysis.recommendation}\n`);
+      return analysis;
+
+    } catch (error: any) {
+      console.error(`Failed to analyze ${ticker}:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Build comprehensive analysis prompt
+   */
+  private buildAnalysisPrompt(ticker: string, data: any, historicalInsights?: string): string {
+    // Format company data for Claude
+    const dataContext = this.formatDataContext(data);
+    
+    // Add historical performance insights if available
+    const performanceContext = historicalInsights || 'No historical performance data available yet.';
+
+    return `You are a professional investment analyst conducting a comprehensive 8-dimension analysis.
+
+COMPANY: ${ticker}
+
+AVAILABLE DATA:
+${dataContext}
+
+HISTORICAL PERFORMANCE INSIGHTS:
+${performanceContext}
+
+ANALYSIS FRAMEWORK:
+
+You MUST analyze ${ticker} across these 8 dimensions using Buffett, Cathie Wood, and Bill Ackman methodologies:
 
 1. EXECUTIVE QUALITY (0-15 points)
    - CEO/CFO track record and tenure
-   - Board composition and independence
-   - Insider ownership and recent transactions
-   - Management execution history
-   - Capital allocation decisions
+   - Insider ownership and alignment
+   - Capital allocation history
+   - Board governance
+   Consider: Does management have skin in the game? Proven execution?
 
-2. BUSINESS QUALITY (0-20 points) [MOST IMPORTANT]
-   - Economic moat (Buffett): pricing power, brand, network effects, switching costs
-   - Competitive advantages: What makes this business defensible?
-   - Market position: Leader or follower?
-   - Business model strength
-   - Customer retention and loyalty
+2. BUSINESS QUALITY (0-20 points) ⭐ MOST IMPORTANT
+   - Economic moat (switching costs, network effects, scale)
+   - Pricing power
+   - Competitive advantages
+   - Market dominance
+   Consider: Would Buffett call this a "wonderful business"?
 
 3. FINANCIAL STRENGTH (0-15 points)
-   - Cash flow generation (operating cash flow)
-   - Balance sheet health (debt levels, liquidity)
-   - Profitability margins (gross, operating, net)
-   - Return on capital (ROE, ROIC)
-   - Financial stability
+   - Balance sheet (debt levels, cash position)
+   - Cash flow generation
+   - Margins (gross, operating, net)
+   - Returns (ROE, ROIC)
+   Consider: Financial fortress or house of cards?
 
 4. INDUSTRY POSITION (0-10 points)
-   - Market share and competitive rank
-   - Industry growth trajectory
-   - Competitive intensity
+   - Market share
+   - Industry growth rate
+   - Competitive landscape
    - Regulatory environment
-   - Industry tailwinds/headwinds
+   Consider: Leader or follower? Tailwinds or headwinds?
 
 5. GROWTH POTENTIAL (0-15 points)
-   - Revenue growth rates (historical + projected)
-   - Total addressable market (TAM) expansion
-   - New products/markets/opportunities
-   - Scalability of business model
-   - Innovation pipeline
+   - Revenue growth trajectory
+   - TAM (Total Addressable Market) expansion
+   - New products/markets
+   - Scalability
+   Consider: Cathie Wood innovation thesis - is this disruptive?
 
 6. VALUATION (0-10 points)
-   - Price vs peers (P/E, P/S, EV/EBITDA)
-   - Price vs historical average
-   - Growth-adjusted valuation (PEG ratio)
+   - P/E ratio vs historical and peers
+   - PEG ratio
+   - EV/Sales, EV/EBITDA
    - Margin of safety
-   - Is the price reasonable for quality?
+   Consider: Ackman value - is there upside with limited downside?
 
-7. CATALYSTS & MOMENTUM (0-10 points)
-   - Upcoming events (earnings, product launches)
-   - Insider buying activity
-   - Institutional accumulation
-   - Technical momentum
-   - News sentiment and market attention
+7. CATALYSTS (0-10 points)
+   - Upcoming earnings/events
+   - Product launches
+   - Market momentum
+   - Institutional interest
+   Consider: What could drive the stock higher near-term?
 
 8. RISK ASSESSMENT (0-5 points)
-   - Key vulnerabilities (debt, competition, disruption)
-   - Regulatory/political risks
-   - Industry disruption threats
-   - Downside scenarios
-   - What could go wrong?
+   - Key business risks
+   - Competitive threats
+   - Regulatory risks
+   - Execution risks
+   Consider: What could go wrong?
 
-CRITICAL INSTRUCTIONS:
-- Be HONEST and RIGOROUS. Don't inflate scores.
-- Missing data should NOT automatically lower scores - analyze what IS available
-- Compare to industry standards, not absolute perfection
-- A "good" company should score 65-75, "great" 75-85, "exceptional" 85+
-- Focus on WHAT MATTERS for this specific business/industry
-- Consider the historical context - what patterns led to winners vs losers?
+SCORING GUIDELINES:
+- Be rigorous and honest
+- Use real data when available
+- Acknowledge unknowns
+- Compare to historical winners/losers
+- Business Quality (moat) is MOST predictive
 
 Respond ONLY with valid JSON:
 {
+  "ticker": "${ticker}",
+  "overallScore": 85,
+  "recommendation": "BUY/HOLD/SELL/STRONG BUY",
   "executiveQuality": {
-    "score": 12,
-    "reasoning": "CEO has 10yr tenure with strong execution. Board 80% independent. Recent insider buying of $5M signals confidence.",
-    "details": ["Strong CEO track record", "Independent board", "Insider buying"]
+    "score": 13,
+    "maxScore": 15,
+    "reasoning": "Detailed explanation...",
+    "details": ["Point 1", "Point 2", "Point 3"]
   },
   "businessQuality": {
-    "score": 18,
-    "reasoning": "Dominant moat through network effects and high switching costs. 70% market share in growing category. Strong pricing power.",
-    "details": ["Network effects moat", "Market leader", "Pricing power"]
+    "score": 19,
+    "maxScore": 20,
+    "reasoning": "Moat analysis...",
+    "details": ["Moat factor 1", "Moat factor 2"]
   },
   "financialStrength": {
     "score": 14,
-    "reasoning": "Strong $10B operating cash flow. Conservative debt at 0.3x equity. 45% operating margins indicate efficiency.",
-    "details": ["Strong cash generation", "Low debt", "High margins"]
+    "maxScore": 15,
+    "reasoning": "Financial analysis...",
+    "details": ["Strength 1", "Strength 2"]
   },
   "industryPosition": {
     "score": 9,
-    "reasoning": "Clear #1 player in fast-growing AI chip market. Limited real competition. Industry TAM growing 40% annually.",
-    "details": ["Market leader", "Growing industry", "Limited competition"]
+    "maxScore": 10,
+    "reasoning": "Market position...",
+    "details": ["Position detail 1", "Position detail 2"]
   },
   "growthPotential": {
-    "score": 15,
-    "reasoning": "Revenue growing 265% YoY. Expanding into new markets (automotive, robotics). TAM expanding from $30B to $1T.",
-    "details": ["Explosive revenue growth", "Market expansion", "New opportunities"]
+    "score": 14,
+    "maxScore": 15,
+    "reasoning": "Growth analysis...",
+    "details": ["Growth driver 1", "Growth driver 2"]
   },
   "valuation": {
     "score": 7,
-    "reasoning": "P/E of 65x is premium but PEG of 0.8 suggests reasonable for growth rate. Trading above historical average.",
-    "details": ["Premium valuation", "Justified by growth", "Some downside risk"]
+    "maxScore": 10,
+    "reasoning": "Valuation assessment...",
+    "details": ["Valuation metric 1", "Valuation metric 2"]
   },
   "catalysts": {
-    "score": 9,
-    "reasoning": "Earnings in 3 days. New product launch next month. Heavy institutional buying. Strong momentum.",
-    "details": ["Near-term earnings", "Product launch", "Institutional buying"]
+    "score": 8,
+    "maxScore": 10,
+    "reasoning": "Catalyst analysis...",
+    "details": ["Catalyst 1", "Catalyst 2"]
   },
   "riskAssessment": {
     "score": 4,
-    "reasoning": "Main risks: supply chain concentration (TSMC), potential competition from hyperscalers. Strong balance sheet provides cushion.",
-    "details": ["Supply chain risk", "Competition threats", "Strong defense"]
+    "maxScore": 5,
+    "reasoning": "Risk analysis...",
+    "details": ["Risk 1", "Risk 2"]
   },
-  "overallScore": 88,
-  "recommendation": "STRONG BUY",
   "strengths": [
-    "Dominant market position with strong moat",
-    "Explosive growth in massive expanding market",
-    "Excellent financial metrics across the board",
-    "Clear near-term catalysts"
+    "Key strength 1",
+    "Key strength 2",
+    "Key strength 3",
+    "Key strength 4"
   ],
   "concerns": [
-    "Premium valuation limits margin of safety",
-    "Supply chain concentration risk"
+    "Key concern 1",
+    "Key concern 2",
+    "Key concern 3"
   ],
-  "investmentThesis": "Exceptional business with dominant moat in rapidly expanding AI market. Despite premium valuation, growth trajectory and competitive position justify investment. Strong match to historical winners with similar profiles.",
-  "comparison": "Similar to past winners AAPL and PLTR: tech leader + moat + growth catalysts. These averaged +50% returns."
+  "investmentThesis": "1-2 paragraph thesis combining Buffett quality, Wood innovation, and Ackman catalyst. Why buy/avoid?",
+  "comparison": "Compare to historical winners/losers or similar companies. What pattern does this match?"
 }`;
   }
 
   /**
-   * Format data for Claude prompt
+   * Format company data context for Claude
    */
-  private formatDataForPrompt(data: any): string {
-    if (!data.hasData) {
-      return 'Limited data available. Analyze based on general knowledge and market position.';
+  private formatDataContext(data: any): string {
+    let context = '';
+
+    // Company profile
+    if (data.profile) {
+      context += `COMPANY PROFILE:
+- Name: ${data.profile.companyName || data.profile.symbol}
+- Sector: ${data.profile.sector || 'Unknown'}
+- Industry: ${data.profile.industry || 'Unknown'}
+- Market Cap: $${(data.profile.mktCap / 1e9).toFixed(2)}B
+- Description: ${data.profile.description?.substring(0, 300) || 'No description'}
+- CEO: ${data.profile.ceo || 'Unknown'}
+- Website: ${data.profile.website || 'Unknown'}
+
+`;
     }
 
-    let text = '';
+    // Current quote
+    if (data.quote) {
+      context += `CURRENT QUOTE:
+- Price: $${data.quote.price}
+- Change: ${data.quote.changesPercentage?.toFixed(2)}%
+- Volume: ${(data.quote.volume / 1e6).toFixed(2)}M
+- Avg Volume: ${(data.quote.avgVolume / 1e6).toFixed(2)}M
+- Market Cap: $${(data.quote.marketCap / 1e9).toFixed(2)}B
+- P/E Ratio: ${data.quote.pe?.toFixed(2) || 'N/A'}
+- 52W High: $${data.quote.yearHigh}
+- 52W Low: $${data.quote.yearLow}
 
-    // Profile
-    if (data.profile) {
-      const p = data.profile;
-      text += `COMPANY PROFILE:\n`;
-      text += `- Name: ${p.companyName}\n`;
-      text += `- Sector: ${p.sector} | Industry: ${p.industry}\n`;
-      text += `- Market Cap: $${(p.mktCap / 1e9).toFixed(2)}B\n`;
-      text += `- Description: ${p.description?.substring(0, 300)}...\n\n`;
+`;
     }
 
     // Executives
     if (data.executives && data.executives.length > 0) {
-      text += `KEY EXECUTIVES:\n`;
+      context += `KEY EXECUTIVES:\n`;
       data.executives.slice(0, 5).forEach((exec: any) => {
-        text += `- ${exec.title}: ${exec.name}${exec.pay ? ` (Pay: $${(exec.pay / 1e6).toFixed(1)}M)` : ''}\n`;
+        context += `- ${exec.title}: ${exec.name} (Pay: $${(exec.pay / 1e6).toFixed(1)}M)\n`;
       });
-      text += '\n';
+      context += '\n';
     }
 
-    // Insider Trading
-    if (data.insiders && data.insiders.length > 0) {
-      const recentInsiders = data.insiders.slice(0, 10);
-      const buying = recentInsiders.filter((i: any) => i.transactionType === 'P-Purchase').length;
-      const selling = recentInsiders.filter((i: any) => i.transactionType === 'S-Sale').length;
-      
-      text += `INSIDER ACTIVITY (Last 6 months):\n`;
-      text += `- Purchases: ${buying} | Sales: ${selling}\n`;
-      
-      if (buying > 0) {
-        const topBuys = recentInsiders
-          .filter((i: any) => i.transactionType === 'P-Purchase')
-          .slice(0, 3);
-        text += `- Top Purchases:\n`;
-        topBuys.forEach((i: any) => {
-          text += `  * ${i.reportingName}: ${i.securitiesTransacted} shares at $${i.price}\n`;
-        });
-      }
-      text += '\n';
-    }
-
-    // Financial Ratios
+    // Financial ratios
     if (data.ratios) {
-      const r = data.ratios;
-      text += `FINANCIAL RATIOS:\n`;
-      text += `- P/E: ${r.priceEarningsRatio?.toFixed(2) || 'N/A'}\n`;
-      text += `- P/B: ${r.priceToBookRatio?.toFixed(2) || 'N/A'}\n`;
-      text += `- Debt/Equity: ${r.debtEquityRatio?.toFixed(2) || 'N/A'}\n`;
-      text += `- Current Ratio: ${r.currentRatio?.toFixed(2) || 'N/A'}\n`;
-      text += `- ROE: ${(r.returnOnEquity * 100)?.toFixed(2) || 'N/A'}%\n`;
-      text += `- ROA: ${(r.returnOnAssets * 100)?.toFixed(2) || 'N/A'}%\n`;
-      text += `- Gross Margin: ${(r.grossProfitMargin * 100)?.toFixed(2) || 'N/A'}%\n`;
-      text += `- Operating Margin: ${(r.operatingProfitMargin * 100)?.toFixed(2) || 'N/A'}%\n`;
-      text += `- Net Margin: ${(r.netProfitMargin * 100)?.toFixed(2) || 'N/A'}%\n\n`;
+      context += `FINANCIAL RATIOS (TTM):
+- ROE: ${(data.ratios.returnOnEquity * 100).toFixed(2)}%
+- ROIC: ${data.ratios.returnOnCapitalEmployed ? (data.ratios.returnOnCapitalEmployed * 100).toFixed(2) + '%' : 'N/A'}
+- Gross Margin: ${(data.ratios.grossProfitMargin * 100).toFixed(2)}%
+- Operating Margin: ${(data.ratios.operatingProfitMargin * 100).toFixed(2)}%
+- Net Margin: ${(data.ratios.netProfitMargin * 100).toFixed(2)}%
+- Current Ratio: ${data.ratios.currentRatio?.toFixed(2)}
+- Debt/Equity: ${data.ratios.debtEquityRatio?.toFixed(2)}
+
+`;
     }
 
-    // Growth Metrics
+    // Growth metrics
     if (data.growth) {
-      const g = data.growth;
-      text += `GROWTH METRICS:\n`;
-      text += `- Revenue Growth: ${(g.revenueGrowth * 100)?.toFixed(2) || 'N/A'}%\n`;
-      text += `- Gross Profit Growth: ${(g.grossProfitGrowth * 100)?.toFixed(2) || 'N/A'}%\n`;
-      text += `- Operating Income Growth: ${(g.operatingIncomeGrowth * 100)?.toFixed(2) || 'N/A'}%\n`;
-      text += `- Net Income Growth: ${(g.netIncomeGrowth * 100)?.toFixed(2) || 'N/A'}%\n\n`;
+      context += `GROWTH METRICS:
+- Revenue Growth: ${(data.growth.revenueGrowth * 100).toFixed(2)}%
+- Net Income Growth: ${(data.growth.netIncomeGrowth * 100).toFixed(2)}%
+- EPS Growth: ${(data.growth.epsgrowth * 100).toFixed(2)}%
+- Operating Income Growth: ${(data.growth.operatingIncomeGrowth * 100).toFixed(2)}%
+
+`;
     }
 
-    // Key Metrics
-    if (data.metrics) {
-      const m = data.metrics;
-      text += `KEY METRICS:\n`;
-      text += `- Market Cap: $${(m.marketCap / 1e9)?.toFixed(2) || 'N/A'}B\n`;
-      text += `- Enterprise Value: $${(m.enterpriseValue / 1e9)?.toFixed(2) || 'N/A'}B\n`;
-      text += `- P/E: ${m.peRatio?.toFixed(2) || 'N/A'}\n`;
-      text += `- PEG: ${m.pegRatio?.toFixed(2) || 'N/A'}\n`;
-      text += `- Price/Sales: ${m.priceToSalesRatio?.toFixed(2) || 'N/A'}\n\n`;
+    // Financial statements
+    if (data.income) {
+      context += `INCOME STATEMENT (Latest Annual):
+- Revenue: $${(data.income.revenue / 1e9).toFixed(2)}B
+- Operating Income: $${(data.income.operatingIncome / 1e9).toFixed(2)}B
+- Net Income: $${(data.income.netIncome / 1e9).toFixed(2)}B
+- EPS: $${data.income.eps?.toFixed(2)}
+
+`;
     }
 
-    // Cash Flow
-    if (data.cashFlow) {
-      const cf = data.cashFlow;
-      text += `CASH FLOW:\n`;
-      text += `- Operating Cash Flow: $${(cf.operatingCashFlow / 1e9)?.toFixed(2) || 'N/A'}B\n`;
-      text += `- Free Cash Flow: $${(cf.freeCashFlow / 1e9)?.toFixed(2) || 'N/A'}B\n`;
-      text += `- CapEx: $${(Math.abs(cf.capitalExpenditure) / 1e9)?.toFixed(2) || 'N/A'}B\n\n`;
+    if (data.balance) {
+      context += `BALANCE SHEET (Latest):
+- Total Assets: $${(data.balance.totalAssets / 1e9).toFixed(2)}B
+- Total Liabilities: $${(data.balance.totalLiabilities / 1e9).toFixed(2)}B
+- Total Equity: $${(data.balance.totalEquity / 1e9).toFixed(2)}B
+- Cash: $${(data.balance.cashAndCashEquivalents / 1e9).toFixed(2)}B
+- Total Debt: $${(data.balance.totalDebt / 1e9).toFixed(2)}B
+
+`;
     }
 
-    // Institutional Holders
+    if (data.cashflow) {
+      context += `CASH FLOW (Latest Annual):
+- Operating CF: $${(data.cashflow.operatingCashFlow / 1e9).toFixed(2)}B
+- Investing CF: $${(data.cashflow.netCashUsedForInvestingActivites / 1e9).toFixed(2)}B
+- Financing CF: $${(data.cashflow.netCashUsedProvidedByFinancingActivities / 1e9).toFixed(2)}B
+- Free Cash Flow: $${(data.cashflow.freeCashFlow / 1e9).toFixed(2)}B
+
+`;
+    }
+
+    // Insider trading
+    if (data.insiders && data.insiders.length > 0) {
+      const buyCount = data.insiders.filter((t: any) => t.transactionType?.includes('Buy') || t.transactionType?.includes('P-Purchase')).length;
+      const sellCount = data.insiders.filter((t: any) => t.transactionType?.includes('Sale') || t.transactionType?.includes('S-Sale')).length;
+      context += `INSIDER TRADING (Recent):
+- Total Transactions: ${data.insiders.length}
+- Buys: ${buyCount}
+- Sells: ${sellCount}
+- Net Sentiment: ${buyCount > sellCount ? 'POSITIVE (more buying)' : sellCount > buyCount ? 'NEGATIVE (more selling)' : 'NEUTRAL'}
+
+`;
+    }
+
+    // Institutional ownership
     if (data.institutional && data.institutional.length > 0) {
-      text += `TOP INSTITUTIONAL HOLDERS:\n`;
-      data.institutional.slice(0, 5).forEach((inst: any) => {
-        text += `- ${inst.holder}: ${((inst.shares / 1e6) || 0).toFixed(1)}M shares\n`;
-      });
-      text += '\n';
+      const totalShares = data.institutional.reduce((sum: number, holder: any) => sum + (holder.shares || 0), 0);
+      context += `INSTITUTIONAL OWNERSHIP:
+- Top Holders: ${data.institutional.length}
+- Total Institutional Shares: ${(totalShares / 1e6).toFixed(2)}M
+- Top 3: ${data.institutional.slice(0, 3).map((h: any) => h.investor).join(', ')}
+
+`;
     }
 
-    return text;
+    if (!context) {
+      context = `LIMITED DATA AVAILABLE
+- Using general knowledge and industry analysis for ${data.ticker}
+- FMP API data not available - analysis based on public information
+`;
+    }
+
+    return context;
   }
 
   /**
    * Parse Claude's analysis response
    */
-  private parseAnalysis(ticker: string, responseText: string): ComprehensiveAnalysis {
+  private parseAnalysis(responseText: string, ticker: string): ComprehensiveAnalysis {
     try {
-      const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const parsed = JSON.parse(cleanedText);
+      const cleaned = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const parsed = JSON.parse(cleaned);
       
       return {
-        ticker,
+        ticker: parsed.ticker || ticker,
         overallScore: parsed.overallScore,
         recommendation: parsed.recommendation,
-        executiveQuality: {
-          score: parsed.executiveQuality.score,
-          maxScore: 15,
-          reasoning: parsed.executiveQuality.reasoning,
-          details: parsed.executiveQuality.details
-        },
-        businessQuality: {
-          score: parsed.businessQuality.score,
-          maxScore: 20,
-          reasoning: parsed.businessQuality.reasoning,
-          details: parsed.businessQuality.details
-        },
-        financialStrength: {
-          score: parsed.financialStrength.score,
-          maxScore: 15,
-          reasoning: parsed.financialStrength.reasoning,
-          details: parsed.financialStrength.details
-        },
-        industryPosition: {
-          score: parsed.industryPosition.score,
-          maxScore: 10,
-          reasoning: parsed.industryPosition.reasoning,
-          details: parsed.industryPosition.details
-        },
-        growthPotential: {
-          score: parsed.growthPotential.score,
-          maxScore: 15,
-          reasoning: parsed.growthPotential.reasoning,
-          details: parsed.growthPotential.details
-        },
-        valuation: {
-          score: parsed.valuation.score,
-          maxScore: 10,
-          reasoning: parsed.valuation.reasoning,
-          details: parsed.valuation.details
-        },
-        catalysts: {
-          score: parsed.catalysts.score,
-          maxScore: 10,
-          reasoning: parsed.catalysts.reasoning,
-          details: parsed.catalysts.details
-        },
-        riskAssessment: {
-          score: parsed.riskAssessment.score,
-          maxScore: 5,
-          reasoning: parsed.riskAssessment.reasoning,
-          details: parsed.riskAssessment.details
-        },
-        strengths: parsed.strengths,
-        concerns: parsed.concerns,
+        executiveQuality: parsed.executiveQuality,
+        businessQuality: parsed.businessQuality,
+        financialStrength: parsed.financialStrength,
+        industryPosition: parsed.industryPosition,
+        growthPotential: parsed.growthPotential,
+        valuation: parsed.valuation,
+        catalysts: parsed.catalysts,
+        riskAssessment: parsed.riskAssessment,
+        strengths: parsed.strengths || [],
+        concerns: parsed.concerns || [],
         investmentThesis: parsed.investmentThesis,
         comparison: parsed.comparison
       };
-      
     } catch (error) {
-      console.error('Failed to parse analysis:', error);
-      throw new Error('Analysis parsing failed');
+      console.error('Failed to parse analysis response:', error);
+      throw new Error('Invalid analysis response format');
     }
   }
 
   /**
    * Batch analyze multiple companies
    */
-  async batchAnalyze(tickers: string[], historicalContext?: string): Promise<Map<string, ComprehensiveAnalysis>> {
-    console.log(`\n🔍 Batch analyzing ${tickers.length} companies...\n`);
+  async batchAnalyze(tickers: string[]): Promise<Map<string, ComprehensiveAnalysis>> {
+    console.log(`\n📊 Batch analyzing ${tickers.length} companies...\n`);
     
     const results = new Map<string, ComprehensiveAnalysis>();
     
     for (const ticker of tickers) {
       try {
-        const analysis = await this.analyzeCompany(ticker, historicalContext);
+        const analysis = await this.analyzeCompany(ticker);
         results.set(ticker, analysis);
         
-        // Rate limiting
-        await this.sleep(3000);
-      } catch (error) {
-        console.error(`Failed to analyze ${ticker}:`, error);
+        // Rate limiting - wait between analyses
+        if (tickers.indexOf(ticker) < tickers.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      } catch (error: any) {
+        console.error(`Skipping ${ticker}: ${error.message}`);
       }
     }
     
+    console.log(`\n✅ Batch analysis complete: ${results.size}/${tickers.length} successful\n`);
     return results;
-  }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 
-export default new ComprehensiveBusinessAnalysisService();
+export default new ComprehensiveBusinessAnalysis();
