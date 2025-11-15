@@ -4,6 +4,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Pool } from 'pg';
 import axios from 'axios';
+import marketDataService from './marketDataService.js';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -36,22 +37,19 @@ interface Signal {
 
 class SignalGeneratorServicePhase4 {
   /**
-   * Get REAL current stock price
+   * Get REAL current stock price using marketDataService (multi-API with fallbacks)
    */
   private async getRealStockPrice(ticker: string): Promise<number | null> {
     try {
-      const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${ALPHA_VANTAGE_API_KEY}`;
-      const response = await axios.get(url);
+      const priceData = await marketDataService.getStockPrice(ticker);
       
-      const quote = response.data['Global Quote'];
-      if (!quote || !quote['05. price']) {
+      if (!priceData || !priceData.price) {
         console.log(`  ⚠️ No price data for ${ticker}`);
         return null;
       }
       
-      const price = parseFloat(quote['05. price']);
-      console.log(`  ✓ ${ticker}: $${price.toFixed(2)}`);
-      return price;
+      console.log(`  ✓ ${ticker}: $${priceData.price.toFixed(2)} (from ${priceData.source})`);
+      return priceData.price;
       
     } catch (error) {
       console.error(`  Error fetching price for ${ticker}:`, error);
@@ -200,25 +198,29 @@ class SignalGeneratorServicePhase4 {
       console.log(`  Approved: ${analyzedSignals.length}`);
       console.log(`  Rejected: ${rejectedSignals.length}${rejectedSignals.length > 0 ? ` (${rejectedSignals.join(', ')})` : ''}\n`);
 
-      // Step 4: Get REAL prices and calculate shares
+      // Step 4: Get REAL prices and calculate shares (PARALLEL with fallback APIs)
       console.log('💰 Step 4: Fetching REAL market prices...');
       const signalsWithPrices: Signal[] = [];
       
+      // Fetch ALL prices in parallel using marketDataService with fallback APIs
+      const tickers = analyzedSignals.map(s => s.ticker);
+      const prices = await marketDataService.getMultiplePrices(tickers);
+      
       for (const signal of analyzedSignals) {
-        const realPrice = await this.getRealStockPrice(signal.ticker);
+        const priceData = prices.get(signal.ticker);
         
-        if (realPrice) {
+        if (priceData && priceData.price) {
+          const realPrice = priceData.price;
           const shares = 100 / realPrice;
           signalsWithPrices.push({
             ...signal,
             entryPrice: realPrice,
             shares: parseFloat(shares.toFixed(4))
           });
+          console.log(`  ✓ ${signal.ticker}: $${realPrice.toFixed(2)} (from ${priceData.source})`);
         } else {
           console.log(`  ⚠️ Skipping ${signal.ticker} - no price available`);
         }
-        
-        await this.sleep(12000); // Alpha Vantage rate limit
       }
 
       console.log(`\n✅ Generated ${signalsWithPrices.length} signals with pattern learning + REAL prices\n`);
