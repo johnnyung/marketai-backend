@@ -54,6 +54,30 @@ router.get('/signals', async (req, res) => {
   }
 });
 
+// Get all AI tips for current user (Frontend UI Route)
+router.get('/ai-tips', authenticateToken, async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    const limit = parseInt(req.query.limit as string) || 50;
+    
+    console.log(`📊 Fetching AI tips for user ${userId}...`);
+    const signals = await signalGeneratorService.getLatestSignals(limit);
+    
+    res.json({ 
+      success: true, 
+      tips: signals,
+      count: signals.length 
+    });
+  } catch (error: any) {
+    console.error('Failed to get AI tips:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to get AI tips', 
+      message: error.message 
+    });
+  }
+});
+
 // NEW: Analyze patterns from closed trades (Phase 4)
 router.post('/analyze-patterns', authenticateToken, async (req, res) => {
   try {
