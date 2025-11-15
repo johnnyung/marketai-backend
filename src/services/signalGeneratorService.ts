@@ -1,5 +1,5 @@
-// backend/src/services/signalGeneratorServicePhase3.ts
-// Phase 3: Enhanced with Comprehensive 8-Dimension Business Analysis
+// backend/src/services/signalGeneratorServicePhase4.ts
+// Phase 4: Pattern Recognition + Adaptive Learning
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Pool } from 'pg';
@@ -31,11 +31,12 @@ interface Signal {
   digestEntryIds: number[];
   analysisScore?: number;
   analysis?: any;
+  successProbability?: number; // NEW - Phase 4
 }
 
-class SignalGeneratorServicePhase3 {
+class SignalGeneratorServicePhase4 {
   /**
-   * Get REAL current stock price from Alpha Vantage
+   * Get REAL current stock price
    */
   private async getRealStockPrice(ticker: string): Promise<number | null> {
     try {
@@ -59,17 +60,31 @@ class SignalGeneratorServicePhase3 {
   }
 
   /**
-   * Generate AI trading signals with comprehensive business analysis
+   * Generate AI trading signals with pattern recognition
    */
   async generateDailySignals(): Promise<Signal[]> {
-    console.log('\n🤖 === GENERATING AI SIGNALS (PHASE 3: COMPREHENSIVE ANALYSIS) ===\n');
+    console.log('\n🤖 === GENERATING AI SIGNALS (PHASE 4: PATTERN RECOGNITION) ===\n');
     
     try {
-      // Step 0: Learn from past performance
-      console.log('🧠 Step 0: Learning from past performance...');
+      // Step 0: Learn from past performance + patterns
+      console.log('🧠 Step 0: Learning from performance + patterns...');
       const performanceAnalysisService = (await import('./performanceAnalysisService.js')).default;
+      const patternRecognitionService = (await import('./patternRecognitionService.js')).default;
+      
       const historicalInsights = await performanceAnalysisService.getInsightsForPrompt();
-      console.log('✓ Loaded historical insights\n');
+      const patternInsights = await patternRecognitionService.getLatestInsights();
+      
+      console.log('✓ Loaded historical insights');
+      console.log('✓ Loaded pattern insights');
+      
+      // Build enhanced context with pattern learning
+      let patternContext = '';
+      if (patternInsights) {
+        patternContext = this.buildPatternContext(patternInsights);
+        console.log('✓ Pattern learning integrated\n');
+      } else {
+        console.log('⚠️ No pattern data yet (need 10+ closed trades)\n');
+      }
 
       // Step 1: Fetch recent high-relevance digest entries
       console.log('📊 Step 1: Fetching high-quality digest entries...');
@@ -101,7 +116,12 @@ class SignalGeneratorServicePhase3 {
 
       // Step 2: Send to Claude for initial analysis
       console.log('🧠 Step 2: Getting initial recommendations from Claude...');
-      const analysisPrompt = this.buildAnalysisPrompt(entries.rows, historicalInsights);
+      const analysisPrompt = this.buildAnalysisPrompt(
+        entries.rows, 
+        historicalInsights,
+        patternContext,
+        patternInsights
+      );
       
       const message = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
@@ -123,12 +143,16 @@ class SignalGeneratorServicePhase3 {
       const initialSignals = this.parseClaudeResponse(responseText, entries.rows);
       console.log(`✓ Extracted ${initialSignals.length} initial signals\n`);
 
-      // Step 3.5: COMPREHENSIVE BUSINESS ANALYSIS (NEW - PHASE 3)
-      console.log('🔍 Step 3.5: Comprehensive 8-dimension analysis (PHASE 3)...');
+      // Step 3.5: COMPREHENSIVE BUSINESS ANALYSIS
+      console.log('🔍 Step 3.5: Comprehensive 8-dimension analysis...');
       const comprehensiveAnalysis = (await import('./comprehensiveBusinessAnalysis.js')).default;
       
       const analyzedSignals: Signal[] = [];
       const rejectedSignals: string[] = [];
+      
+      // Use adaptive threshold from pattern learning
+      const minScore = patternInsights?.optimalThresholds?.minOverallScore || 65;
+      console.log(`  Using adaptive threshold: ${minScore}/100 (from pattern learning)\n`);
       
       for (const signal of initialSignals) {
         console.log(`\n  Analyzing ${signal.ticker}...`);
@@ -136,33 +160,36 @@ class SignalGeneratorServicePhase3 {
         try {
           const analysis = await comprehensiveAnalysis.analyzeCompany(signal.ticker, historicalInsights);
           
-          // Filter threshold: 65/100 (quality companies)
-          if (analysis.overallScore >= 65) {
+          // Calculate success probability (Phase 4)
+          const successProbability = await patternRecognitionService.calculateSuccessProbability({
+            analysisScore: analysis.overallScore,
+            analysis: analysis
+          });
+          
+          // Use adaptive threshold
+          if (analysis.overallScore >= minScore) {
             console.log(`  ✅ ${signal.ticker}: ${analysis.overallScore}/100 - APPROVED`);
             console.log(`     Business Quality: ${analysis.businessQuality.score}/${analysis.businessQuality.maxScore}`);
+            console.log(`     Success Probability: ${(successProbability * 100).toFixed(1)}%`);
             console.log(`     ${analysis.recommendation}`);
             
-            // Enhance reasoning with comprehensive analysis
-            const enhancedReasoning = `${signal.reasoning}\n\nCOMPREHENSIVE ANALYSIS (${analysis.overallScore}/100): ${analysis.investmentThesis} ${analysis.comparison}`;
+            // Enhance reasoning with comprehensive analysis + probability
+            const enhancedReasoning = `${signal.reasoning}\n\nCOMPREHENSIVE ANALYSIS (${analysis.overallScore}/100): ${analysis.investmentThesis} ${analysis.comparison}\n\nSUCCESS PROBABILITY: ${(successProbability * 100).toFixed(1)}% based on historical pattern matching.`;
             
             analyzedSignals.push({
               ...signal,
               reasoning: enhancedReasoning,
               analysisScore: analysis.overallScore,
-              analysis: analysis
+              analysis: analysis,
+              successProbability: successProbability
             });
           } else {
-            console.log(`  ❌ ${signal.ticker}: ${analysis.overallScore}/100 - REJECTED (quality score below 65)`);
+            console.log(`  ❌ ${signal.ticker}: ${analysis.overallScore}/100 - REJECTED (below threshold ${minScore})`);
             console.log(`     Concerns: ${analysis.concerns.slice(0, 2).join(', ')}`);
             rejectedSignals.push(`${signal.ticker} (score: ${analysis.overallScore})`);
           }
         } catch (error) {
-          console.log(`  ⚠️ ${signal.ticker}: Analysis failed, including with caution`);
-          // Include signal even if analysis fails (don't lose good opportunities due to API issues)
-          analyzedSignals.push({
-            ...signal,
-            analysisScore: 70 // Neutral score for failed analysis
-          });
+          console.log(`  ⚠️ ${signal.ticker}: Analysis failed, skipping`);
         }
         
         // Rate limiting
@@ -172,11 +199,6 @@ class SignalGeneratorServicePhase3 {
       console.log(`\n✓ Comprehensive analysis complete`);
       console.log(`  Approved: ${analyzedSignals.length}`);
       console.log(`  Rejected: ${rejectedSignals.length}${rejectedSignals.length > 0 ? ` (${rejectedSignals.join(', ')})` : ''}\n`);
-
-      // If we rejected too many, we might need more signals
-      if (analyzedSignals.length < 3) {
-        console.log('⚠️ Warning: Less than 3 signals passed comprehensive analysis');
-      }
 
       // Step 4: Get REAL prices and calculate shares
       console.log('💰 Step 4: Fetching REAL market prices...');
@@ -199,7 +221,7 @@ class SignalGeneratorServicePhase3 {
         await this.sleep(12000); // Alpha Vantage rate limit
       }
 
-      console.log(`\n✅ Generated ${signalsWithPrices.length} signals with comprehensive analysis + REAL prices\n`);
+      console.log(`\n✅ Generated ${signalsWithPrices.length} signals with pattern learning + REAL prices\n`);
       
       // Step 5: Save to tip tracker
       console.log('💾 Step 5: Saving to AI Tip Tracker...');
@@ -217,80 +239,116 @@ class SignalGeneratorServicePhase3 {
   }
 
   /**
-   * Build analysis prompt with historical insights
+   * Build pattern context for Claude prompt
    */
-  private buildAnalysisPrompt(entries: any[], historicalInsights: string): string {
+  private buildPatternContext(insights: any): string {
+    let context = '\nPATTERN LEARNING INSIGHTS:\n';
+    
+    // Winning patterns
+    if (insights.winningPatterns && insights.winningPatterns.length > 0) {
+      context += '\nProven Winning Patterns:\n';
+      insights.winningPatterns.forEach((p: any) => {
+        context += `- ${p.pattern}: ${p.winRate.toFixed(1)}% win rate, ${p.avgReturn.toFixed(1)}% avg return (${p.count} trades)\n`;
+      });
+    }
+    
+    // Losing patterns
+    if (insights.losingPatterns && insights.losingPatterns.length > 0) {
+      context += '\nPatterns to Avoid:\n';
+      insights.losingPatterns.forEach((p: any) => {
+        context += `- ${p.pattern}: ${p.winRate.toFixed(1)}% win rate (${p.count} trades) - AVOID\n`;
+      });
+    }
+    
+    // Optimal thresholds
+    if (insights.optimalThresholds) {
+      context += '\nOptimal Thresholds (from data):\n';
+      context += `- Minimum Overall Score: ${insights.optimalThresholds.minOverallScore}\n`;
+      context += `- Minimum Business Quality: ${insights.optimalThresholds.minBusinessQuality}\n`;
+    }
+    
+    // Recommendations
+    if (insights.recommendations && insights.recommendations.length > 0) {
+      context += '\nKey Recommendations:\n';
+      insights.recommendations.forEach((r: string) => {
+        context += `- ${r}\n`;
+      });
+    }
+    
+    return context;
+  }
+
+  /**
+   * Build analysis prompt with pattern learning
+   */
+  private buildAnalysisPrompt(
+    entries: any[], 
+    historicalInsights: string,
+    patternContext: string,
+    patternInsights: any
+  ): string {
     const entriesText = entries.map(e => 
       `[${e.source_type}] ${e.ai_summary} | Tickers: ${(e.tickers || []).join(', ')} | Sentiment: ${e.ai_sentiment} | Score: ${e.ai_relevance_score}`
     ).join('\n');
 
-    return `You are a professional stock analyst analyzing market intelligence data to identify the 5 BEST trading opportunities for the next 1-7 days.
+    const minBusinessQuality = patternInsights?.optimalThresholds?.minBusinessQuality || 15;
+
+    return `You are a professional stock analyst with access to proven winning patterns from historical performance.
 
 ${historicalInsights}
+
+${patternContext}
 
 MARKET INTELLIGENCE DATA (Last 7 Days):
 ${entriesText}
 
-TASK: Identify the top 5 trading opportunities with the HIGHEST conviction based on:
-1. The market intelligence data above
-2. The historical performance patterns (what worked, what failed)
-3. Your understanding of what makes winning opportunities
+TASK: Identify the top 5 trading opportunities that match our PROVEN winning patterns.
 
-CRITICAL REQUIREMENTS:
-- ONLY recommend opportunities that match our winning patterns
-- PRIORITIZE Healthcare sector (83% historical win rate!)
-- Focus on high-quality businesses (will be comprehensively analyzed next)
-- Aim for 70%+ win rate by being highly selective
-- Focus on high-probability setups similar to past winners (AAPL, PLTR, JBHT)
-
-NOTE: These signals will undergo comprehensive 8-dimension business analysis including:
-- Executive quality, business moat, financial strength, industry position
-- Growth potential, valuation, catalysts, and risks
-- Companies with weak fundamentals will be filtered out
+CRITICAL - PATTERN MATCHING:
+${patternInsights ? `
+- Your historical data shows winning patterns - FOLLOW THEM EXACTLY
+- Business Quality ≥${minBusinessQuality} is critical for wins
+- Focus on patterns that achieved 70%+ win rates historically
+- Avoid patterns that historically failed
+` : `
+- Focus on business quality (moat) as primary driver
+- Healthcare sector has shown 83% historical win rate
+- Established tech with strong fundamentals performs well
+`}
 
 For each opportunity, provide:
-1. Ticker symbol (e.g., AAPL, NVDA)
+1. Ticker symbol
 2. Company name
 3. Action: BUY, SELL, or WATCH
-4. Confidence: 0-100 (only recommend if >75, aim for 80+)
-5. Reasoning: 2-3 sentences explaining WHY this is an opportunity NOW and HOW it matches our winning patterns
-6. Catalysts: 2-4 specific upcoming events or factors
-7. Predicted gain %: Your estimate for next 7 days
+4. Confidence: 0-100 (only recommend if >75)
+5. Reasoning: WHY this matches proven winning patterns
+6. Catalysts: 2-4 specific upcoming events
+7. Predicted gain %: Estimate for next 7 days
 8. Risk factors: 2-3 key risks
 9. Time horizon: "1-3 days", "3-7 days", or "1-2 weeks"
 
-Focus on:
-- Strong directional conviction (clear BUY or SELL thesis)
-- Timely catalysts happening soon
-- Clear risk/reward setup
-- Patterns that match our historical winners (especially Healthcare 83% win rate)
-- Avoiding patterns that match our historical losers
-- Quality businesses with competitive advantages
+IMPORTANT:
+- Match patterns that ACTUALLY worked historically
+- Business quality (moat) is most predictive dimension
+- Be selective - quality over quantity
+- Reference specific winning patterns in reasoning
 
 Respond ONLY with valid JSON in this exact format:
 {
   "signals": [
     {
-      "ticker": "AAPL",
-      "companyName": "Apple Inc.",
+      "ticker": "NVDA",
+      "companyName": "NVIDIA Corporation",
       "action": "BUY",
       "confidence": 85,
-      "reasoning": "Strong iPhone demand in China plus new AI features announcement creates bullish setup. Matches our winning pattern of tech leaders with upcoming catalysts and strong moats.",
-      "catalysts": ["Earnings in 2 days", "New product launch", "Analyst upgrades"],
-      "predictedGainPct": 5.2,
-      "riskFactors": ["Market volatility", "Supply chain concerns"],
+      "reasoning": "Matches proven 'High Business Quality' pattern that achieved 85% win rate. Dominant moat through CUDA ecosystem similar to past winners.",
+      "catalysts": ["Earnings next week", "New product launch"],
+      "predictedGainPct": 8.5,
+      "riskFactors": ["Volatility", "Competition"],
       "timeHorizon": "3-7 days"
     }
   ]
-}
-
-IMPORTANT: 
-- Return EXACTLY 5 signals (no more, no less)
-- Only include tickers you have HIGH conviction on (confidence >75)
-- Be specific about catalysts with actual dates/events when possible
-- Base predictions on intelligence data AND historical performance patterns
-- Reference why this matches winning patterns in the reasoning
-- Focus on QUALITY businesses that will pass comprehensive analysis`;
+}`;
   }
 
   /**
@@ -330,7 +388,7 @@ IMPORTANT:
   }
 
   /**
-   * Save signal to ai_tip_tracker
+   * Save signal to ai_tip_tracker with success probability
    */
   private async saveToTipTracker(signal: Signal, entries: any[]): Promise<void> {
     try {
@@ -354,8 +412,9 @@ IMPORTANT:
           ai_risk_factors,
           time_horizon,
           analysis_score,
+          success_probability,
           created_by
-        ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       `, [
         signal.ticker,
         signal.companyName,
@@ -372,10 +431,11 @@ IMPORTANT:
         JSON.stringify(signal.riskFactors),
         signal.timeHorizon,
         signal.analysisScore || null,
-        'AI_SYSTEM_PHASE3'
+        signal.successProbability ? (signal.successProbability * 100).toFixed(1) : null,
+        'AI_SYSTEM_PHASE4'
       ]);
       
-      console.log(`  ✓ Saved ${signal.ticker} (Analysis: ${signal.analysisScore}/100)`);
+      console.log(`  ✓ Saved ${signal.ticker} (Analysis: ${signal.analysisScore}/100, Probability: ${signal.successProbability ? (signal.successProbability * 100).toFixed(1) : 'N/A'}%)`);
       
     } catch (error: any) {
       console.error(`Failed to save ${signal.ticker}:`, error.message);
@@ -400,4 +460,4 @@ IMPORTANT:
   }
 }
 
-export default new SignalGeneratorServicePhase3();
+export default new SignalGeneratorServicePhase4();

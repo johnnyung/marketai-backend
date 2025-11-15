@@ -1,26 +1,27 @@
 // backend/src/routes/intelligence.ts
-// Phase 3: Comprehensive 8-Dimension Business Analysis
+// Phase 4: Pattern Recognition & Continuous Learning
 
 import { Router } from 'express';
 import signalGeneratorService from '../services/signalGeneratorService.js';
 import priceUpdaterService from '../services/priceUpdaterService.js';
 import performanceAnalysisService from '../services/performanceAnalysisService.js';
 import comprehensiveAnalysis from '../services/comprehensiveBusinessAnalysis.js';
+import patternRecognitionService from '../services/patternRecognitionService.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
 
-// Generate fresh AI signals WITH COMPREHENSIVE ANALYSIS (Phase 3)
+// Generate fresh AI signals WITH PATTERN LEARNING (Phase 4)
 router.post('/generate-signals', authenticateToken, async (req, res) => {
   try {
-    console.log('🚀 Generating AI signals with Phase 3 comprehensive analysis...');
+    console.log('🚀 Generating AI signals with Phase 4 pattern learning...');
     const signals = await signalGeneratorService.generateDailySignals();
     
     res.json({ 
       success: true, 
       signals, 
       count: signals.length,
-      message: `Generated ${signals.length} signals with 8-dimension analysis + REAL prices (Phase 3)`
+      message: `Generated ${signals.length} signals with pattern learning + 8D analysis + REAL prices (Phase 4)`
     });
   } catch (error: any) {
     console.error('Signal generation failed:', error);
@@ -53,7 +54,86 @@ router.get('/signals', async (req, res) => {
   }
 });
 
-// NEW: Comprehensive analysis for a specific ticker
+// NEW: Analyze patterns from closed trades (Phase 4)
+router.post('/analyze-patterns', authenticateToken, async (req, res) => {
+  try {
+    console.log('🧠 Analyzing patterns from closed trades...');
+    const insights = await patternRecognitionService.analyzePatterns();
+    
+    res.json({
+      success: true,
+      insights,
+      message: 'Pattern analysis complete'
+    });
+  } catch (error: any) {
+    console.error('Pattern analysis failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Pattern analysis failed',
+      message: error.message
+    });
+  }
+});
+
+// NEW: Get pattern insights (Phase 4)
+router.get('/pattern-insights', async (req, res) => {
+  try {
+    const insights = await patternRecognitionService.getLatestInsights();
+    
+    if (!insights) {
+      return res.json({
+        success: true,
+        insights: null,
+        message: 'No pattern insights yet - need at least 10 closed trades'
+      });
+    }
+    
+    res.json({
+      success: true,
+      insights
+    });
+  } catch (error: any) {
+    console.error('Failed to get pattern insights:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get pattern insights',
+      message: error.message
+    });
+  }
+});
+
+// NEW: Calculate success probability for a ticker (Phase 4)
+router.get('/success-probability/:ticker', async (req, res) => {
+  try {
+    const ticker = req.params.ticker.toUpperCase();
+    
+    // Get comprehensive analysis
+    const analysis = await comprehensiveAnalysis.analyzeCompany(ticker);
+    
+    // Calculate success probability
+    const probability = await patternRecognitionService.calculateSuccessProbability({
+      analysisScore: analysis.overallScore,
+      analysis: analysis
+    });
+    
+    res.json({
+      success: true,
+      ticker,
+      analysisScore: analysis.overallScore,
+      successProbability: (probability * 100).toFixed(1),
+      recommendation: analysis.recommendation
+    });
+  } catch (error: any) {
+    console.error(`Failed to calculate probability for ${req.params.ticker}:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Probability calculation failed',
+      message: error.message
+    });
+  }
+});
+
+// Comprehensive analysis for a specific ticker
 router.get('/analyze/:ticker', async (req, res) => {
   try {
     const ticker = req.params.ticker.toUpperCase();
@@ -76,7 +156,7 @@ router.get('/analyze/:ticker', async (req, res) => {
   }
 });
 
-// NEW: Batch analyze multiple tickers
+// Batch analyze multiple tickers
 router.post('/analyze-batch', authenticateToken, async (req, res) => {
   try {
     const { tickers } = req.body;
@@ -202,7 +282,7 @@ router.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     service: 'intelligence',
-    phase: 3,
+    phase: 4,
     features: [
       'performance-feedback', 
       'comprehensive-8d-analysis',
@@ -212,7 +292,10 @@ router.get('/health', (req, res) => {
       'growth-potential',
       'valuation',
       'catalysts',
-      'risk-assessment'
+      'risk-assessment',
+      'pattern-recognition',
+      'adaptive-learning',
+      'success-probability'
     ],
     timestamp: new Date().toISOString()
   });
