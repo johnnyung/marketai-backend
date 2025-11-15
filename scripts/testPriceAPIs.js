@@ -1,7 +1,9 @@
 // backend/scripts/testPriceAPIs.js
-// Test script to verify all price API sources
-require('dotenv').config();
-const axios = require('axios');
+// ES Module version - Test script to verify all price API sources
+import dotenv from 'dotenv';
+import axios from 'axios';
+
+dotenv.config();
 
 const testSymbol = 'AAPL';
 

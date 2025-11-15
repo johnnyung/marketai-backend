@@ -1,5 +1,5 @@
 // backend/src/services/priceService.ts
-import marketDataService from './marketDataService';
+import marketDataService from './marketDataService.js';
 
 class PriceService {
   /**

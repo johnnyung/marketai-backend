@@ -150,6 +150,7 @@ app.use('/api/learning', learningRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/intelligence', intelligenceRoutes);
 app.use('/api/intelligence', dailyIntelligenceRoutes);
+app.use('/api/intelligence/threads', intelligenceThreadsRoutes); // FIXED: Changed from /api/threads to /api/intelligence/threads
 app.use('/api/opportunities', tradingOpportunitiesRoutes);
 app.use('/api/opportunities', opportunitiesRoutes); // NEW: SEC EDGAR scanner
 app.use('/api/data', dataRoutes);
@@ -158,7 +159,6 @@ app.use('/api/digest', digestCleanupRoutes);
 app.use('/api/digest', scheduledIngestionRoutes);
 app.use('/api/ai-tip-tracker', aiTipTrackerRoutes);
 app.use('/api/deep-dive', deepDiveRoutes);
-app.use('/api/threads', intelligenceThreadsRoutes);
 app.use('/api/intelligence', executiveSummaryRoutes);
 app.use('/api/vetting', tickerVettingRoutes);
 app.use('/api/cache', cacheRoutes);
@@ -346,7 +346,7 @@ API Endpoints:
   POST /api/ai-tip-tracker/position      - Create tracked position
   POST /api/ai-tip-tracker/update-all    - Update all positions
   
-  📬 Deep Dive Analysis:
+  🔬 Deep Dive Analysis:
   GET  /api/deep-dive/:ticker            - Analyze any ticker
   GET  /api/deep-dive/cached             - Get cached analyses
   GET  /api/deep-dive/ticker-of-day      - Comprehensive ticker analysis
@@ -356,10 +356,9 @@ API Endpoints:
   GET  /api/deep-dive/all                - All analyses at once
   
   🧵 Intelligence Threads:
-  POST /api/threads/detect               - Run AI thread detection
-  GET  /api/threads                      - Get all threads
-  GET  /api/threads/:id                  - Get thread by ID
-  PUT  /api/threads/:id/status           - Update thread status
+  POST /api/intelligence/threads/generate - Generate AI threads (FIXED)
+  GET  /api/intelligence/threads          - Get all threads
+  GET  /api/intelligence/threads/:id      - Get thread by ID
   
   📅 Economic Calendar:
   GET  /api/calendar/upcoming            - Next 7 days events
