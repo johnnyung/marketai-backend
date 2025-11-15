@@ -1,6 +1,6 @@
 // backend/src/services/comprehensiveBusinessAnalysis.ts
 // Phase 3: Comprehensive 8-Dimension Business Analysis
-// UPDATED: Uses NEW FMP API v4 endpoints (post-August 2025)
+// UPDATED: November 2025 - Uses NEW FMP /stable/ endpoints
 
 import Anthropic from '@anthropic-ai/sdk';
 import axios from 'axios';
@@ -10,7 +10,7 @@ const anthropic = new Anthropic({
 });
 
 const FMP_API_KEY = process.env.FMP_API_KEY;
-const FMP_BASE_URL = 'https://financialmodelingprep.com/api';
+const FMP_BASE_URL = 'https://financialmodelingprep.com/stable';
 
 interface ComprehensiveAnalysis {
   ticker: string;
@@ -39,37 +39,35 @@ interface DimensionScore {
 
 class ComprehensiveBusinessAnalysis {
   /**
-   * NEW FMP API: Get company profile
-   * v4 endpoint: /v4/company-profile
+   * NEW FMP API: Fetch data using /stable/ endpoints (November 2025)
    */
-  private async fetchFMPData(endpoint: string, version: string = 'v3'): Promise<any> {
+  private async fetchFMPData(endpoint: string): Promise<any> {
     if (!FMP_API_KEY) {
       console.log('  ⚠️ FMP_API_KEY not configured, using general knowledge');
       return null;
     }
 
     try {
-      const url = `${FMP_BASE_URL}/${version}${endpoint}`;
-      const params = endpoint.includes('?') 
-        ? `&apikey=${FMP_API_KEY}`
-        : `?apikey=${FMP_API_KEY}`;
+      const url = `${FMP_BASE_URL}${endpoint}`;
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const fullUrl = `${url}${separator}apikey=${FMP_API_KEY}`;
       
-      const response = await axios.get(`${url}${params}`, {
+      const response = await axios.get(fullUrl, {
         timeout: 10000
       });
       
       return response.data;
     } catch (error: any) {
-      console.log(`  ⚠️ FMP request failed: ${version}${endpoint}`);
+      console.log(`  ⚠️ FMP request failed: ${endpoint}`);
       if (error.response?.status === 403 || error.response?.status === 404) {
-        console.log(`     This endpoint may require a different FMP plan or has been deprecated`);
+        console.log(`     Status: ${error.response.status} - Check API plan`);
       }
       return null;
     }
   }
 
   /**
-   * Gather comprehensive company data using NEW FMP v4 API
+   * Gather comprehensive company data using NEW FMP /stable/ API
    */
   private async gatherCompanyData(ticker: string): Promise<any> {
     console.log('\n  Step 1: Gathering comprehensive data...');
@@ -89,90 +87,78 @@ class ComprehensiveBusinessAnalysis {
       institutional: null
     };
 
-    // NEW v4 API: Company Overview (replaces old /profile)
-    // Try multiple endpoints since API structure changed
-    
-    // Try v4 company-outlook (new comprehensive endpoint)
-    const outlook = await this.fetchFMPData(`/company-outlook?symbol=${ticker}`, 'v4');
-    if (outlook?.profile) {
-      data.profile = outlook.profile;
-      console.log(`    - Profile: Yes (v4)`);
+    // Company Profile (NEW: /stable/profile)
+    const profile = await this.fetchFMPData(`/profile?symbol=${ticker}`);
+    if (profile && Array.isArray(profile) && profile.length > 0) {
+      data.profile = profile[0];
+      console.log(`    - Profile: Yes`);
     }
     
-    // Try v3 profile as fallback
-    if (!data.profile) {
-      const profileV3 = await this.fetchFMPData(`/profile/${ticker}`, 'v3');
-      if (profileV3 && Array.isArray(profileV3) && profileV3.length > 0) {
-        data.profile = profileV3[0];
-        console.log(`    - Profile: Yes (v3)`);
-      }
-    }
-
-    // Real-time quote (v3 - still works)
-    const quote = await this.fetchFMPData(`/quote/${ticker}`, 'v3');
+    // Real-time quote (NEW: /stable/quote)
+    const quote = await this.fetchFMPData(`/quote?symbol=${ticker}`);
     if (quote && Array.isArray(quote) && quote.length > 0) {
       data.quote = quote[0];
       console.log(`    - Quote: Yes`);
     }
 
-    // Key executives (v3 or v4)
-    const executives = await this.fetchFMPData(`/key-executives/${ticker}`, 'v3');
+    // Key executives (NEW: /stable/key-executives)
+    const executives = await this.fetchFMPData(`/key-executives?symbol=${ticker}`);
     if (executives && Array.isArray(executives)) {
       data.executives = executives.slice(0, 5);
       console.log(`    - Executives: ${executives.length}`);
     }
 
-    // Insider trading (v4 has new structure)
-    const insiders = await this.fetchFMPData(`/insider-trading?symbol=${ticker}&page=0`, 'v4');
+    // Insider trading (NEW: /stable/insider-trading/search)
+    const insiders = await this.fetchFMPData(`/insider-trading/search?symbol=${ticker}&page=0&limit=10`);
     if (insiders && Array.isArray(insiders)) {
-      data.insiders = insiders.slice(0, 10);
+      data.insiders = insiders;
       console.log(`    - Insiders: ${insiders.length}`);
     }
 
-    // Financial ratios (TTM)
-    const ratios = await this.fetchFMPData(`/ratios-ttm/${ticker}`, 'v3');
+    // Financial ratios TTM (NEW: /stable/ratios-ttm)
+    const ratios = await this.fetchFMPData(`/ratios-ttm?symbol=${ticker}`);
     if (ratios && Array.isArray(ratios) && ratios.length > 0) {
       data.ratios = ratios[0];
       console.log(`    - Ratios: Yes`);
     }
 
-    // Key metrics (TTM)
-    const metrics = await this.fetchFMPData(`/key-metrics-ttm/${ticker}`, 'v3');
+    // Key metrics TTM (NEW: /stable/key-metrics-ttm)
+    const metrics = await this.fetchFMPData(`/key-metrics-ttm?symbol=${ticker}`);
     if (metrics && Array.isArray(metrics) && metrics.length > 0) {
       data.metrics = metrics[0];
       console.log(`    - Metrics: Yes`);
     }
 
-    // Financial growth
-    const growth = await this.fetchFMPData(`/financial-growth/${ticker}?limit=1`, 'v3');
+    // Financial growth (NEW: /stable/financial-growth)
+    const growth = await this.fetchFMPData(`/financial-growth?symbol=${ticker}&limit=1`);
     if (growth && Array.isArray(growth) && growth.length > 0) {
       data.growth = growth[0];
       console.log(`    - Growth: Yes`);
     }
 
-    // Income statement (annual)
-    const income = await this.fetchFMPData(`/income-statement/${ticker}?limit=1`, 'v3');
+    // Income statement (NEW: /stable/income-statement)
+    const income = await this.fetchFMPData(`/income-statement?symbol=${ticker}&limit=1`);
     if (income && Array.isArray(income) && income.length > 0) {
       data.income = income[0];
       console.log(`    - Income: Yes`);
     }
 
-    // Balance sheet
-    const balance = await this.fetchFMPData(`/balance-sheet-statement/${ticker}?limit=1`, 'v3');
+    // Balance sheet (NEW: /stable/balance-sheet-statement)
+    const balance = await this.fetchFMPData(`/balance-sheet-statement?symbol=${ticker}&limit=1`);
     if (balance && Array.isArray(balance) && balance.length > 0) {
       data.balance = balance[0];
       console.log(`    - Balance: Yes`);
     }
 
-    // Cash flow statement
-    const cashflow = await this.fetchFMPData(`/cash-flow-statement/${ticker}?limit=1`, 'v3');
+    // Cash flow statement (NEW: /stable/cash-flow-statement)
+    const cashflow = await this.fetchFMPData(`/cash-flow-statement?symbol=${ticker}&limit=1`);
     if (cashflow && Array.isArray(cashflow) && cashflow.length > 0) {
       data.cashflow = cashflow[0];
       console.log(`    - Cashflow: Yes`);
     }
 
-    // Institutional holders
-    const institutional = await this.fetchFMPData(`/institutional-holder/${ticker}`, 'v3');
+    // Institutional holders (NEW: /stable/institutional-ownership/latest)
+    const institutional = await this.fetchFMPData(`/institutional-ownership/symbol-positions-summary?symbol=${ticker}`);
     if (institutional && Array.isArray(institutional)) {
       data.institutional = institutional.slice(0, 10);
       console.log(`    - Institutional: ${institutional.length}`);
@@ -420,7 +406,7 @@ Respond ONLY with valid JSON:
     if (data.executives && data.executives.length > 0) {
       context += `KEY EXECUTIVES:\n`;
       data.executives.slice(0, 5).forEach((exec: any) => {
-        context += `- ${exec.title}: ${exec.name} (Pay: $${(exec.pay / 1e6).toFixed(1)}M)\n`;
+        context += `- ${exec.title}: ${exec.name}${exec.pay ? ' (Pay: $' + (exec.pay / 1e6).toFixed(1) + 'M)' : ''}\n`;
       });
       context += '\n';
     }
@@ -428,13 +414,13 @@ Respond ONLY with valid JSON:
     // Financial ratios
     if (data.ratios) {
       context += `FINANCIAL RATIOS (TTM):
-- ROE: ${(data.ratios.returnOnEquity * 100).toFixed(2)}%
-- ROIC: ${data.ratios.returnOnCapitalEmployed ? (data.ratios.returnOnCapitalEmployed * 100).toFixed(2) + '%' : 'N/A'}
-- Gross Margin: ${(data.ratios.grossProfitMargin * 100).toFixed(2)}%
-- Operating Margin: ${(data.ratios.operatingProfitMargin * 100).toFixed(2)}%
-- Net Margin: ${(data.ratios.netProfitMargin * 100).toFixed(2)}%
-- Current Ratio: ${data.ratios.currentRatio?.toFixed(2)}
-- Debt/Equity: ${data.ratios.debtEquityRatio?.toFixed(2)}
+- ROE: ${(data.ratios.returnOnEquityTTM * 100).toFixed(2)}%
+- ROIC: ${data.ratios.returnOnCapitalEmployedTTM ? (data.ratios.returnOnCapitalEmployedTTM * 100).toFixed(2) + '%' : 'N/A'}
+- Gross Margin: ${(data.ratios.grossProfitMarginTTM * 100).toFixed(2)}%
+- Operating Margin: ${(data.ratios.operatingProfitMarginTTM * 100).toFixed(2)}%
+- Net Margin: ${(data.ratios.netProfitMarginTTM * 100).toFixed(2)}%
+- Current Ratio: ${data.ratios.currentRatioTTM?.toFixed(2)}
+- Debt/Equity: ${data.ratios.debtEquityRatioTTM?.toFixed(2)}
 
 `;
     }
@@ -484,8 +470,14 @@ Respond ONLY with valid JSON:
 
     // Insider trading
     if (data.insiders && data.insiders.length > 0) {
-      const buyCount = data.insiders.filter((t: any) => t.transactionType?.includes('Buy') || t.transactionType?.includes('P-Purchase')).length;
-      const sellCount = data.insiders.filter((t: any) => t.transactionType?.includes('Sale') || t.transactionType?.includes('S-Sale')).length;
+      const buyCount = data.insiders.filter((t: any) => 
+        t.transactionType?.toLowerCase().includes('buy') || 
+        t.transactionType?.toLowerCase().includes('purchase')
+      ).length;
+      const sellCount = data.insiders.filter((t: any) => 
+        t.transactionType?.toLowerCase().includes('sale') || 
+        t.transactionType?.toLowerCase().includes('sell')
+      ).length;
       context += `INSIDER TRADING (Recent):
 - Total Transactions: ${data.insiders.length}
 - Buys: ${buyCount}
@@ -497,11 +489,9 @@ Respond ONLY with valid JSON:
 
     // Institutional ownership
     if (data.institutional && data.institutional.length > 0) {
-      const totalShares = data.institutional.reduce((sum: number, holder: any) => sum + (holder.shares || 0), 0);
       context += `INSTITUTIONAL OWNERSHIP:
 - Top Holders: ${data.institutional.length}
-- Total Institutional Shares: ${(totalShares / 1e6).toFixed(2)}M
-- Top 3: ${data.institutional.slice(0, 3).map((h: any) => h.investor).join(', ')}
+- Recent Activity Tracked
 
 `;
     }
