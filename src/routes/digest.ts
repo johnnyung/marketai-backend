@@ -1,72 +1,48 @@
-// backend/src/routes/digest.ts
-// Digest API endpoints - COMPLETE WORKING VERSION
-
+// src/routes/digest.ts
 import express from 'express';
 import intelligentDigestService from '../services/intelligentDigestService.js';
 
 const router = express.Router();
 
-/**
- * POST /api/digest/ingest
- * Trigger full data collection and AI analysis
- */
+// POST /api/digest/ingest
 router.post('/ingest', async (req, res) => {
   try {
-    console.log('🔄 Digest ingestion requested by user...');
-    
+    console.log('📡 Digest ingestion requested...');
     const result = await intelligentDigestService.ingestAndStore();
     
     res.json({
       success: true,
-      message: `Successfully ingested ${result.stored} new entries`,
+      message: `Ingested ${result.stored} entries`,
       collected: result.collected,
       stored: result.stored,
       duplicates: result.duplicates,
       stats: result.stats
     });
   } catch (error: any) {
-    console.error('❌ Digest ingestion failed:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Ingestion failed'
-    });
+    console.error('❌ Ingestion failed:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-/**
- * GET /api/digest/summary
- * Get current database statistics
- */
+// GET /api/digest/summary
 router.get('/summary', async (req, res) => {
   try {
     const summary = await intelligentDigestService.getDigestSummary();
     res.json(summary);
   } catch (error: any) {
-    console.error('Error getting digest summary:', error);
-    res.status(500).json({ 
-      error: error.message || 'Failed to get summary' 
-    });
+    res.status(500).json({ error: error.message });
   }
 });
 
-/**
- * GET /api/digest/entries
- * Get recent digest entries with optional filters
- */
+// GET /api/digest/entries - FIXED: removed companies column
 router.get('/entries', async (req, res) => {
   try {
-    const { 
-      source_type, 
-      min_relevance = 0, 
-      limit = 100 
-    } = req.query;
+    const { source_type, min_relevance = 0, limit = 100 } = req.query;
     
     let query = `
       SELECT 
-        id, source_type, source_name,
-        ai_summary, ai_relevance_score, ai_sentiment, ai_importance,
-        tickers, people, companies,
-        event_date, created_at
+        id, source_type, source_name, ai_summary, ai_relevance_score, 
+        ai_sentiment, ai_importance, tickers, people, event_date, created_at
       FROM digest_entries
       WHERE expires_at > NOW()
     `;
@@ -91,51 +67,32 @@ router.get('/entries', async (req, res) => {
     params.push(parseInt(limit as string));
     
     const result = await intelligentDigestService.pool.query(query, params);
-    
     res.json(result.rows);
   } catch (error: any) {
     console.error('Error getting digest entries:', error);
-    res.status(500).json({ 
-      error: error.message || 'Failed to get entries' 
-    });
+    res.status(500).json({ error: error.message });
   }
 });
 
-/**
- * GET /api/digest/sources
- * Get status of all data sources
- */
+// GET /api/digest/sources
 router.get('/sources', async (req, res) => {
   try {
-    const result = await intelligentDigestService.pool.query(`
-      SELECT * FROM source_health
-    `);
+    const result = await intelligentDigestService.pool.query('SELECT * FROM source_health');
     res.json(result.rows);
   } catch (error: any) {
-    console.error('Error getting sources:', error);
-    res.status(500).json({ 
-      error: error.message || 'Failed to get sources' 
-    });
+    res.status(500).json({ error: error.message });
   }
 });
 
-/**
- * GET /api/digest/stats
- * Get ingestion statistics
- */
+// GET /api/digest/stats
 router.get('/stats', async (req, res) => {
   try {
     const result = await intelligentDigestService.pool.query(`
-      SELECT * FROM digest_stats
-      ORDER BY date DESC
-      LIMIT 30
+      SELECT * FROM digest_stats ORDER BY date DESC LIMIT 30
     `);
     res.json(result.rows);
   } catch (error: any) {
-    console.error('Error getting stats:', error);
-    res.status(500).json({ 
-      error: error.message || 'Failed to get stats' 
-    });
+    res.status(500).json({ error: error.message });
   }
 });
 
