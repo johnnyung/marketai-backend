@@ -63,6 +63,31 @@ app.get('/api/ai-analysis/latest', (req, res) => {
   res.json({ success: true, data: [] });
 });
 
+// Collection endpoints → trigger real digest ingestion
+app.post('/api/collect/*', async (req: any, res: any) => {
+  try {
+    const intelligentDigestService = (await import('./services/intelligentDigestService.js')).default;
+    const result = await intelligentDigestService.ingestAndStore();
+    res.json({ 
+      success: true, 
+      collected: result.stored,
+      message: `Collected ${result.stored} entries` 
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/crypto-correlation/crypto/collect', async (req: any, res: any) => {
+  try {
+    const intelligentDigestService = (await import('./services/intelligentDigestService.js')).default;
+    const result = await intelligentDigestService.ingestAndStore();
+    res.json({ success: true, collected: result.stored });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Error handler
 app.use((err: any, req: any, res: any, next: any) => {
   console.error('Server error:', err);
