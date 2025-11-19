@@ -1,0 +1,163 @@
+import { Router } from 'express';
+import { db } from '../db/index.js';
+import { authenticateToken } from '../middleware/auth.js';
+
+const router = Router();
+
+// GET /api/journal - Get all journal entries for user
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { ticker, startDate, endDate } = req.query;
+
+    let query = `
+      SELECT id, ticker, entry_date, exit_date, strategy, setup_notes, 
+             execution_notes, outcome_notes, emotional_state, lessons_learned,
+             rating, tags, created_at, updated_at
+      FROM trade_journal
+      WHERE user_id = $1
+    `;
+    const params: any[] = [userId];
+
+    if (ticker) {
+      params.push(ticker);
+      query += ` AND ticker = $${params.length}`;
+    }
+    if (startDate) {
+      params.push(startDate);
+      query += ` AND entry_date >= $${params.length}`;
+    }
+    if (endDate) {
+      params.push(endDate);
+      query += ` AND entry_date <= $${params.length}`;
+    }
+
+    query += ` ORDER BY entry_date DESC`;
+
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/journal/:id - Get single journal entry
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { id } = req.params;
+
+    const result = await db.query(
+      `SELECT * FROM trade_journal WHERE id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Journal entry not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/journal - Create journal entry
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const {
+      ticker,
+      entryDate,
+      exitDate,
+      strategy,
+      setupNotes,
+      executionNotes,
+      outcomeNotes,
+      emotionalState,
+      lessonsLearned,
+      rating,
+      tags
+    } = req.body;
+
+    const result = await db.query(
+      `INSERT INTO trade_journal (
+        user_id, ticker, entry_date, exit_date, strategy, setup_notes,
+        execution_notes, outcome_notes, emotional_state, lessons_learned,
+        rating, tags
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *`,
+      [userId, ticker, entryDate, exitDate, strategy, setupNotes,
+       executionNotes, outcomeNotes, emotionalState, lessonsLearned,
+       rating, tags]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/journal/:id - Update journal entry
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { id } = req.params;
+    const {
+      ticker,
+      entryDate,
+      exitDate,
+      strategy,
+      setupNotes,
+      executionNotes,
+      outcomeNotes,
+      emotionalState,
+      lessonsLearned,
+      rating,
+      tags
+    } = req.body;
+
+    const result = await db.query(
+      `UPDATE trade_journal SET
+        ticker = $1, entry_date = $2, exit_date = $3, strategy = $4,
+        setup_notes = $5, execution_notes = $6, outcome_notes = $7,
+        emotional_state = $8, lessons_learned = $9, rating = $10,
+        tags = $11, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $12 AND user_id = $13
+      RETURNING *`,
+      [ticker, entryDate, exitDate, strategy, setupNotes, executionNotes,
+       outcomeNotes, emotionalState, lessonsLearned, rating, tags, id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Journal entry not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/journal/:id - Delete journal entry
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { id } = req.params;
+
+    const result = await db.query(
+      `DELETE FROM trade_journal WHERE id = $1 AND user_id = $2 RETURNING id`,
+      [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Journal entry not found' });
+    }
+
+    res.json({ message: 'Journal entry deleted' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;

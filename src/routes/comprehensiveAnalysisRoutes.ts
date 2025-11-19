@@ -1,0 +1,103 @@
+// src/routes/comprehensiveAnalysisRoutes.ts
+import express from 'express';
+import intelligentDigestService from '../services/intelligentDigestService.js';
+import aiTipGenerator from '../services/aiTipGenerator.js';
+import intelligenceThreadsService from '../services/intelligenceThreadsService.js';
+import pool from '../db/index.js';
+
+const router = express.Router();
+
+router.post('/run-comprehensive', async (req, res) => {
+  try {
+    console.log('🚀 Starting comprehensive AI analysis...');
+    
+    const results = {
+      digestProcessed: 0,
+      tipsGenerated: 0,
+      threadsCreated: 0
+    };
+
+    // Step 1: Process raw data into digest with AI
+    console.log('📊 Processing intelligence digest...');
+    const digestResult = await intelligentDigestService.ingestAndStore();
+    results.digestProcessed = digestResult.stored;
+    console.log(`✅ Digest: ${digestResult.stored} entries`);
+
+    // Step 2: Generate AI stock tips from digest data
+    console.log('🤖 Generating AI stock tips...');
+    const tips = await aiTipGenerator.generateComprehensiveTips();
+    results.tipsGenerated = tips.length;
+    console.log(`✅ Tips: ${tips.length} generated`);
+
+    // Step 3: Detect intelligence threads
+    console.log('🧵 Detecting intelligence threads...');
+    const threads = await intelligenceThreadsService.detectAndCreateThreads();
+    results.threadsCreated = threads;
+    console.log(`✅ Threads: ${threads} created`);
+
+    console.log('✅ Comprehensive analysis complete!');
+
+    res.json({
+      success: true,
+      message: 'Comprehensive AI analysis complete',
+      data: results
+    });
+
+  } catch (error: any) {
+    console.error('❌ Comprehensive analysis failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Analytics summary endpoint
+router.get('/summary', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        COUNT(*) as total_entries,
+        COUNT(CASE WHEN ai_relevance_score >= 80 THEN 1 END) as high_priority,
+        COUNT(CASE WHEN ai_relevance_score >= 60 THEN 1 END) as medium_priority,
+        COUNT(DISTINCT source_type) as active_sources,
+        MAX(created_at) as last_update
+      FROM digest_entries 
+      WHERE created_at > NOW() - INTERVAL '24 hours'
+    `);
+    
+    res.json({ 
+      success: true, 
+      data: result.rows[0] 
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Pattern matches endpoint
+router.get('/pattern-matches', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM pattern_matches 
+      ORDER BY collected_at DESC 
+      LIMIT 10
+    `);
+    
+    res.json({ 
+      success: true, 
+      data: result.rows 
+    });
+  } catch (error: any) {
+    // Return empty array if table doesn't exist yet
+    res.json({ 
+      success: true, 
+      data: [] 
+    });
+  }
+});
+
+export default router;
