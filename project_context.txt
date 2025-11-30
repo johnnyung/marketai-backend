@@ -1,0 +1,243 @@
+✅ MARKET_AI PROJECT — MASTER CONTEXT v113.0-CORE (“SIMPLE UI / COMPLEX BRAIN”)
+
+[DO NOT EDIT MANUALLY — ALL UPDATES MUST BE ADDITIVE ONLY]
+
+⸻
+
+🏷 [PROJECT IDENTITY]
+
+Name: MarketAI
+Type: Financial Intelligence Platform
+Architecture: OMNI-VECTOR ALPHA ENGINE v113.0-CORE
+Frontend: React + Vite + Tailwind
+Backend: Node + Express + TypeScript
+Database: PostgreSQL (Railway)
+
+⸻
+
+🧠 THE CORE PRINCIPLE
+
+**Backend expands. Frontend contracts.
+
+Brain stays complex. UI stays simple.
+All updates must preserve and expand logic — never replace or remove value.**
+
+⸻
+
+🔮 THE OMNI-VECTOR ENGINE (v101 → v113) — MUST REMAIN FULLY ACTIVE
+
+1. INGESTION CORTEX
+    •    Wide-Net Discovery Engine (v113) — scans 500+ tickers through ETF constituents, news, social spikes
+    •    Auto-Paired Trade Generator (v111)
+    •    Regime Transition Predictor (v110)
+    •    Shadow Liquidity Pulse (v109)
+    •    Market Sentiment Thermometer (v108)
+    •    Catalyst Hunter (multi-source events)
+    •    ETF Leakage Detector
+    •    Supply Chain Shock Mapper
+    •    Insider Intent Scanner
+    •    Narrative Pressure Engine
+
+2. DEEP BRAIN — CROSS SIGNAL CONSENSUS
+    •    Multi-Agent Validation (Momentum / Value / Catalyst)
+    •    Fractal Divergence Engine
+    •    Macro Filters
+    •    Liquidity Filters
+    •    Sentiment Consensus
+    •    Narrative vs Reality conflict resolution
+
+3. EXECUTION AGENT
+    •    Dynamic Watchlist Management
+    •    Position Sizing Layer
+    •    Trade Lifecycle Manager (Entry → Review → Magistrate → Exit)
+
+4. SYSTEM STABILITY LAYER
+    •    PSSL (Protected System State Lock)
+    •    VLEE (Version-Locked Engine Execution)
+    •    Schema Guardian
+    •    Logic Density Checker
+
+5. FRONTEND INTELLIGENCE LAYER (v113-F2)
+    •    Retail Interpretability Engine (“Explain Like I’m 12”)
+    •    Simple-Badge Generator
+    •    Confidence Dials
+    •    Catalyst Highlight Generator
+    •    Mobile-First UI Synthesizer
+
+6. END-TO-END SYNCHRONIZATION
+    •    Frontend-Backend Route Validator
+    •    Dynamic Watchlist Sync
+    •    Daily Output Generator
+
+⸻
+
+🌟 THE NEW ULTRA-SIMPLE FRONTEND SYSTEM (4 PAGES TOTAL)
+
+**All previous pages are collapsed into these.
+
+No engine is removed.
+Only the UI is simplified.**
+
+⸻
+
+🔥 PAGE 1 — DAILY PICKS (THE MAIN EXPERIENCE)
+
+Primary Purpose:
+
+Provide 3 stock picks every morning, derived from all engines v101–v113.
+
+Backend Engines Used:
+
+✔ Entire ingestion cortex
+✔ Entire Deep Brain
+✔ All consensus filters
+✔ Catalyst Hunter
+✔ Risk Constraints
+✔ Insider, Shadow, Gamma, Sentiment, Macro, etc.
+
+Payload Format (Final Output):
+
+DailyPicksPayload = [
+  {
+    ticker: "",
+    confidence: 0–100,
+    explainLikeIm12: "",
+    catalysts: [],
+    riskTier: "",
+    agentConsensus: "",
+    narrativeScore: "",
+    insiderScore: "",
+    liquiditySignal: "",
+    macroRegime: "",
+    shadowSignal: "",
+    gammaRegime: ""
+  }
+]
+
+Primary Action:
+
+Refresh Picks → run comprehensiveDataEngine.processHypotheses()
+
+This page replaces:
+AI Tips, War Room, Catalyst Hunter, Correlation, Regime, Narrative, Multi-Agent pages.
+
+⸻
+
+📊 PAGE 2 — MY PORTFOLIO (Clean, Compact)
+
+Purpose:
+
+Provide retail-friendly analysis of user holdings.
+
+Backend Engines Used:
+    •    userPortfolioService
+    •    riskConstraintService (v112)
+    •    divergenceDetectorService
+    •    regimeTransitionService
+    •    insiderIntentService
+    •    narrativePressureService
+    •    shadowLiquidityService
+
+UI Elements:
+    •    Portfolio Health Score (A–F)
+    •    Top 5 risk flags
+    •    Key AI signals per holding
+    •    Suggested Action
+
+Primary Action:
+
+Analyze My Portfolio → userPortfolioService.analyze()
+
+⸻
+
+📈 PAGE 3 — WATCHLIST (Auto-Managed)
+
+Purpose:
+
+Show top opportunities bubbling up from backend scanning.
+
+Backend Engines Used:
+    •    Wide-Net Discovery (v113)
+    •    Catalyst Hunter
+    •    Shadow Liquidity
+    •    ETF Leakage
+    •    Multi-Agent signals
+    •    Narrative/Social sentiment
+
+Rules:
+    •    UI shows top 10 items only
+    •    Backend still scans 500+ tickers
+    •    No UI limitation may affect backend logic
+
+Primary Actions:
+    •    Promote to Watchlist
+    •    Toggle Alerts
+
+⸻
+
+🛠 PAGE 4 — SYSTEM STATUS (Simplified Operational View)
+
+Purpose:
+
+Replace complex diagnostics pages with a single, simple indicator.
+
+Backend Engines Used:
+    •    diagnosticsService
+    •    schemaHarmonizer
+    •    sourceGuard
+    •    systemStatusService
+
+UI Elements:
+    •    System OK (✓)
+    •    Ingestion Pipeline Healthy (✓)
+    •    Database Connected (✓)
+    •    Last Self-Test timestamp
+    •    Expand for details (optional)
+
+Primary Action:
+
+Run Full Self-Test → diagnosticsService.run()
+
+⸻
+
+🚫 REMOVED (FRONTEND ONLY, BACKEND STILL ACTIVE)
+
+These pages no longer exist visually, but their engines remain active:
+    •    Regime Dashboard
+    •    Multi-Agent Console
+    •    Narrative / Sentiment Hub
+    •    Correlation Lab
+    •    Catalyst Hunter page
+    •    War Room
+    •    Command Center
+    •    Diagnostics (replaced by System Status)
+
+Again:
+
+Remove the page, NOT the engine.
+
+⸻
+
+🔒 [CRITICAL SYSTEMS – MUST NEVER BE STUBBED, REMOVED, OR SANITIZED]
+    •    sectorDiscoveryService.getExpandedUniverse()
+    •    masterIngestionService.runFullIngestion()
+    •    comprehensiveDataEngine.processHypotheses()
+    •    multiAgentValidationService.validate()
+    •    divergenceDetectorService.analyzeFractals()
+    •    shadowLiquidityService.scan()
+    •    catalystHunterService.run()
+    •    riskConstraintService.checkFit()
+    •    retailInterpretabilityService.generateSimpleTags()
+    •    uiRouteValidatorService.validate()
+    •    schemaHarmonizerService.run()
+
+⸻
+
+🎯 [ACTIVE OBJECTIVE]
+
+MarketAI v113.0-CORE delivers:
+
+**A super-powered backend with 20+ engines.
+
+A radically simplified UI with 4 total pages.
+And every morning: 3 high-quality stock picks with plain English explanations.**

@@ -5,41 +5,31 @@ dotenv.config();
 
 const { Pool } = pg;
 
-// Database connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  max: 10,
+  idleTimeoutMillis: 30000
 });
 
-// Test connection
-pool.on('connect', () => {
-  console.log('✅ Database connected');
-});
-
+// 1. Silence Logs: Only log errors, removed the 'connect' success log
 pool.on('error', (err) => {
-  console.error('❌ Database error:', err);
+  console.error('❌ Database error:', err.message);
 });
 
-// Query helper
-export async function query(text: string, params?: any[]) {
-  const start = Date.now();
-  const res = await pool.query(text, params);
-  const duration = Date.now() - start;
-  
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Query executed:', { text, duration, rows: res.rowCount });
-  }
-  
-  return res;
-}
+// 2. Core Query Function
+export const query = async (text: string, params?: any[]) => {
+  return pool.query(text, params);
+};
 
-// Transaction helper
-export async function transaction(callback: (client: any) => Promise<any>) {
+// 3. Get Client
+export const getClient = async () => {
+  return pool.connect();
+};
+
+// 4. Transaction Wrapper (Restored)
+export const transaction = async (callback: (client: any) => Promise<any>) => {
   const client = await pool.connect();
-  
   try {
     await client.query('BEGIN');
     const result = await callback(client);
@@ -51,14 +41,13 @@ export async function transaction(callback: (client: any) => Promise<any>) {
   } finally {
     client.release();
   }
-}
+};
 
-// Get a client from pool
-export async function getClient() {
-  return await pool.connect();
-}
-
-// Export as named export for routes
-export const db = { query, transaction, getClient };
+// 5. DB Object Wrapper (Restored for compatibility)
+export const db = {
+  query,
+  getClient,
+  transaction
+};
 
 export default pool;

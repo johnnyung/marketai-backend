@@ -1,4 +1,3 @@
-// src/scripts/purgeMockData.ts
 import pool from '../db/index.js';
 
 async function purgeMockData() {
@@ -6,8 +5,8 @@ async function purgeMockData() {
   
   // Delete mock data from raw_data_collection
   const result1 = await pool.query(`
-    DELETE FROM raw_data_collection 
-    WHERE data_json::text LIKE '%simulated%' 
+    DELETE FROM raw_data_collection
+    WHERE data_json::text LIKE '%simulated%'
     OR data_json::text LIKE '%mock%'
     OR source_name IN (
       'Options Flow', 'Twitter Sentiment', 'StockTwits', 'Financial News',

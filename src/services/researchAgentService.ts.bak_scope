@@ -1,0 +1,149 @@
+import pool from '../db/index.js';
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY
+});
+
+class ResearchAgentService {
+
+  async expandKnowledgeBase() {
+    console.log('🕵️ Research Agent: Scanning for High-Impact Market Dynamics...');
+
+    try {
+      // 1. Clean ancient history to keep the DB fresh
+      await pool.query("DELETE FROM historical_events WHERE event_date < '1970-01-01'");
+      
+      // 2. Get the "Loudest" Signals (Viral/Impactful)
+      // We prioritize items containing critical market keywords
+      const newsRes = await pool.query(`
+        SELECT title, source, category
+        FROM raw_intelligence
+        WHERE created_at > NOW() - INTERVAL '24 hours'
+        AND (
+            title ILIKE '%crash%' OR title ILIKE '%surge%' OR
+            title ILIKE '%war%' OR title ILIKE '%crisis%' OR
+            title ILIKE '%rate%' OR title ILIKE '%inflation%' OR
+            title ILIKE '%breakout%' OR title ILIKE '%record%' OR
+            title ILIKE '%sec%' OR title ILIKE '%fomc%'
+        )
+        ORDER BY created_at DESC
+        LIMIT 50
+      `);
+
+      // Fallback if no "loud" news found
+      let headlines = "";
+      if (newsRes.rows.length < 5) {
+         console.log("   ℹ️ Low volatility detected, broadening search...");
+         const fallbackRes = await pool.query(`
+            SELECT title FROM raw_intelligence
+            ORDER BY created_at DESC LIMIT 30
+         `);
+         headlines = fallbackRes.rows.map(r => r.title).join(" | ");
+      } else {
+         headlines = newsRes.rows.map(r => `[${r.category.toUpperCase()}] ${r.title}`).join("\n");
+      }
+
+      if (!headlines) return { expanded: false, message: "No intelligence data found." };
+
+      // 3. Ask AI for 5 Contextual Parallels
+      const prompt = `
+        You are a Wall Street Historian and Risk Manager.
+        
+        CURRENT HIGH-IMPACT MARKET DATA:
+        ${headlines.substring(0, 5000)}
+
+        TASK:
+        1. Analyze the data above to find the single most dominant "Market Narrative" right now (e.g., "Tech Bubble 2.0", "Geopolitical Oil Shock", "Fed Pivot").
+        2. Retrieve exactly 5 SPECIFIC HISTORICAL EVENTS from the last 50 years (1974-2024) that serve as the best precedents for this narrative.
+        3. The events must be distinct (e.g., don't list 5 rate hikes, list a rate hike, a currency crisis, a sector rotation, etc.).
+        
+        OUTPUT JSON ONLY:
+        {
+          "archetype": "Name of the current dynamic (e.g. 'AI Infrastructure Supercycle')",
+          "new_events": [
+            {
+              "event": "Name of Past Event (Year)",
+              "type": "Category (Disruption/Policy/Merger/Boom/Crash)",
+              "description": "1 sentence on what happened + 1 sentence on why it matches TODAY'S news.",
+              "market_impact": 0.0,
+              "affected_sectors": ["Sector 1", "Sector 2"],
+              "recovery_pattern": "Specific outcome (e.g. 'V-shaped recovery led by Energy stocks').",
+              "keywords": ["tag1", "tag2"]
+            }
+          ]
+        }
+      `;
+
+      const message = await anthropic.messages.create({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 2500, // Increased token limit for 5 items
+        messages: [{ role: 'user', content: prompt }]
+      });
+
+      const text = message.content[0].type === 'text' ? message.content[0].text : '{}';
+      const cleanJson = text.replace(/\n?/g, '').trim();
+      
+      // Robust JSON parsing
+      let data;
+      try {
+        const start = cleanJson.indexOf('{');
+        const end = cleanJson.lastIndexOf('}');
+        if (start !== -1 && end !== -1) {
+            data = JSON.parse(cleanJson.substring(start, end + 1));
+        } else {
+            data = JSON.parse(cleanJson);
+        }
+      } catch (e) {
+        console.error("   ❌ Failed to parse AI JSON response");
+        return { expanded: false, error: "Invalid JSON" };
+      }
+
+      // 4. Insert 5 Events
+      let addedCount = 0;
+      if (data.new_events && Array.isArray(data.new_events)) {
+        // Ensure we actually process up to 5
+        const eventsToProcess = data.new_events.slice(0, 5);
+        
+        for (const evt of eventsToProcess) {
+            // Check duplicates
+            const check = await pool.query("SELECT id FROM historical_events WHERE event = $1", [evt.event]);
+            
+            if (check.rows.length === 0) {
+                await pool.query(`
+                  INSERT INTO historical_events
+                  (event, event_date, event_type, description, market_impact, duration_days, affected_sectors, recovery_pattern, keywords, collected_at)
+                  VALUES ($1, NOW(), $2, $3, $4, 30, $5, $6, $7, NOW())
+                `, [
+                  evt.event, 
+                  evt.type, 
+                  evt.description, 
+                  evt.market_impact || 0,
+                  JSON.stringify(evt.affected_sectors || []), 
+                  evt.recovery_pattern, 
+                  evt.keywords || []
+                ]);
+                console.log(`   📚 Learned: ${evt.event} (Matches: ${data.archetype})`);
+                addedCount++;
+            } else {
+                // Update description if it's a better match for today
+                await pool.query(`
+                    UPDATE historical_events 
+                    SET description = $1, collected_at = NOW() 
+                    WHERE event = $2
+                `, [evt.description, evt.event]);
+                console.log(`   🔄 Refreshed: ${evt.event}`);
+            }
+        }
+      }
+
+      return { expanded: true, added: addedCount, archetype: data.archetype };
+
+    } catch (error) {
+      console.error('Research Agent Error:', error);
+      return { expanded: false, error };
+    }
+  }
+}
+
+export default new ResearchAgentService();

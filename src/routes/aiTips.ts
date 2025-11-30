@@ -2,6 +2,8 @@
 import express from 'express';
 import pool from '../db/index.js';
 import aiTipGenerator from '../services/aiTipGenerator.js';
+import confidenceRecalibrationService from '../services/confidenceRecalibrationService.js'; // NEW
+import agentReliabilityService from '../services/agentReliabilityService.js'; // NEW
 
 const router = express.Router();
 
@@ -37,7 +39,7 @@ router.get('/by-tier/:tier', async (req, res) => {
   }
 });
 
-// Get all active tips
+// Get all active tips - ENHANCED FOR PHASE 5
 router.get('/active', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -46,11 +48,59 @@ router.get('/active', async (req, res) => {
       ORDER BY tier, confidence DESC
     `);
     
-    res.json({ success: true, data: result.rows });
+    // Inject Learning Layer Data
+    const enhancedData = await Promise.all(result.rows.map(async (row) => {
+        const matrix = row.decision_matrix || {};
+        const engines = matrix.engines || {};
+
+        // Recalculate confidence to be safe (ensure display matches engine)
+        // In Phase 4, this is already saved to DB, but we re-run to get the "Reasons" object
+        const recal = await confidenceRecalibrationService.recalibrate(
+            50, // Base (dummy, we just want the multipliers)
+            engines.agents, // Multi-Agent Breakdown
+            engines.fsi,
+            engines.narrative,
+            engines.shadow,
+            engines.regime
+        );
+
+        return {
+            ...row,
+            // --- POT PHASE 5 EXTENSIONS ---
+            confidence_reasons: [
+                recal.reason,
+                `FSI Traffic Light: ${engines.fsi?.traffic_light || 'N/A'}`,
+                `Regime: ${engines.regime?.current_regime || 'N/A'}`,
+                `Shadow Bias: ${engines.shadow?.bias || 'N/A'}`
+            ],
+            agent_reliability_scores: await getAgentStats(),
+            fsi_factors: engines.fsi,
+            narrative_trend_alignment: engines.narrative?.pressure_score > 60 ? 'ALIGNED' : 'NEUTRAL',
+            shadow_liquidity_alignment: engines.shadow?.bias,
+            
+            // PHFA Extensions
+            risk_adjusted_confidence: row.confidence, // Already adjusted in Phase 4
+            reliability_explanation: `Confidence modified by ${recal.multipliers.agent.toFixed(2)}x based on recent agent performance.`
+        };
+    }));
+    
+    res.json({ success: true, data: enhancedData });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Helper to get agent stats
+async function getAgentStats() {
+    try {
+        const res = await pool.query(`
+            SELECT agent_name, win_rate, reliability_multiplier
+            FROM agent_reliability_snapshots
+            WHERE snapshot_date = CURRENT_DATE
+        `);
+        return res.rows;
+    } catch (e) { return []; }
+}
 
 // Close position
 router.post('/close/:id', async (req, res) => {

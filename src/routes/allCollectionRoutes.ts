@@ -94,21 +94,21 @@ router.post('/fmp', async (req, res) => {
     let count = 0;
     
     // Market news
-    const news = await axios.get(`https://financialmodelingprep.com/api/v3/stock_news?limit=50&apikey=${API_KEY}`);
+    const news = await axios.get(`https://financialmodelingprep.com/stable/stock_news?limit=50&apikey=${API_KEY}`);
     for (const article of news.data) {
       await storeData('news', 'FMP News', article);
       count++;
     }
     
     // Economic calendar
-    const calendar = await axios.get(`https://financialmodelingprep.com/api/v3/economic_calendar?apikey=${API_KEY}`);
+    const calendar = await axios.get(`https://financialmodelingprep.com/stable/economic_calendar?apikey=${API_KEY}`);
     for (const event of calendar.data.slice(0, 20)) {
       await storeData('macro', 'FMP Economic Calendar', event);
       count++;
     }
     
     // Insider trading
-    const insider = await axios.get(`https://financialmodelingprep.com/api/v4/insider-trading?limit=100&apikey=${API_KEY}`);
+    const insider = await axios.get(`https://financialmodelingprep.com/stable/insider-trading?limit=100&apikey=${API_KEY}`);
     for (const trade of insider.data) {
       await storeData('insider', 'FMP Insider Trading', trade);
       count++;

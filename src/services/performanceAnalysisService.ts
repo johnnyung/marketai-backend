@@ -361,7 +361,7 @@ class PerformanceAnalysisService {
     const wordFreq: { [key: string]: number } = {};
 
     reasoningTexts.forEach(text => {
-      const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+      const words: string[] = text.toLowerCase().match(/\b\w+\b/g) || [];
       words.forEach(word => {
         if (word.length > 4 && !stopWords.includes(word)) {
           wordFreq[word] = (wordFreq[word] || 0) + 1;

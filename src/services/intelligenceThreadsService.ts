@@ -126,7 +126,7 @@ Respond with ONLY valid JSON:
 
     try {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-3-sonnet-20240229',
         max_tokens: 3000,
         messages: [{ role: 'user', content: prompt }]
       });
@@ -251,7 +251,7 @@ Respond with ONLY valid JSON:
 
     try {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-3-sonnet-20240229',
         max_tokens: 2000,
         messages: [{ role: 'user', content: prompt }]
       });

@@ -1,0 +1,129 @@
+import pool from '../db/index.js';
+import Anthropic from '@anthropic-ai/sdk';
+import axios from 'axios';
+import aiTipGenerator from './aiTipGenerator.js';
+import liveStatusService from './liveStatusService.js';
+import { collectFinancialNews } from './collectors/newsCollector.js';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY
+});
+
+class ComprehensiveDataEngine {
+  
+  async runComprehensiveCollection() {
+    console.log('🧠 STARTING DEEP ANALYSIS...');
+    await liveStatusService.update('ai_analyst', 'scanning', 'Reading Market...');
+    
+    try {
+      const context = await this.gatherLiveContext();
+      const history = await this.gatherHistoricalContext();
+      
+      if (!context || context.length < 100) {
+        await collectFinancialNews();
+      }
+
+      await liveStatusService.update('ai_analyst', 'scanning', 'Thinking...');
+      const analysis = await this.synthesizeMarketOutlook(context, history);
+
+      await this.saveAnalysis(analysis);
+
+      await liveStatusService.update('ai_analyst', 'scanning', 'Picking Stocks...');
+      await aiTipGenerator.processDeepBrainRecommendations(analysis);
+
+      await liveStatusService.update('ai_analyst', 'new_data', 'Strategy Ready', 1);
+
+      return { success: true, pattern_match: analysis };
+
+    } catch (error: any) {
+      console.error('❌ Analysis Failed:', error);
+      await liveStatusService.update('ai_analyst', 'error', 'Analysis Failed');
+      return { success: false, error: error.message };
+    }
+  }
+
+  private async gatherLiveContext(): Promise<string> {
+    try {
+      const news = await pool.query(`SELECT title FROM raw_intelligence WHERE category='news' ORDER BY created_at DESC LIMIT 30`);
+      const political = await pool.query(`SELECT title FROM raw_intelligence WHERE category='political' ORDER BY created_at DESC LIMIT 10`);
+      const crypto = await pool.query(`SELECT title FROM raw_intelligence WHERE category='crypto' ORDER BY created_at DESC LIMIT 10`);
+      
+      return `
+        [NEWS] ${news.rows.map(r => r.title).join(' | ')}
+        [POLITICS] ${political.rows.map(r => r.title).join(' | ')}
+        [CRYPTO] ${crypto.rows.map(r => r.title).join(' | ')}
+      `;
+    } catch (e) { return ""; }
+  }
+
+  private async gatherHistoricalContext(): Promise<string> {
+    try {
+      const res = await pool.query(`SELECT event, description, market_impact FROM historical_events LIMIT 20`);
+      return JSON.stringify(res.rows);
+    } catch (e) { return "[]"; }
+  }
+
+  private async synthesizeMarketOutlook(context: string, history: string) {
+    const prompt = `
+      You are a Hedge Fund Manager.
+      
+      MARKET DATA:
+      ${context.substring(0, 6000)}
+
+      TASK:
+      1. Identify the current market theme.
+      2. Find a Historical Parallel.
+      3. Pick 3 Stocks and 1 Crypto.
+      
+      OUTPUT JSON ONLY:
+      {
+        "current_theme": "Theme Title",
+        "historical_match": "Event Name (Year)",
+        "similarity_score": 85,
+        "reasoning": "Why it matches.",
+        "predicted_impact": "Outlook.",
+        "defensive_sector": { "name": "Sector", "picks": [{ "ticker": "SYM", "action": "BUY", "reason": "Catalyst", "target_gain_pct": 10, "stop_loss_pct": 5 }] },
+        "growth_sectors": [{ "name": "Sector", "picks": [{ "ticker": "SYM", "action": "BUY", "reason": "Catalyst", "target_gain_pct": 15, "stop_loss_pct": 8 }] }],
+        "crypto_unicorns": [{ "ticker": "BTC", "action": "BUY", "reason": "Catalyst", "target_gain_pct": 20, "stop_loss_pct": 10 }]
+      }
+    `;
+
+    const message = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 1500,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const text = message.content[0].type === 'text' ? message.content[0].text : '{}';
+    
+    // Robust JSON Extraction
+    try {
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start !== -1 && end !== -1) {
+            return JSON.parse(text.substring(start, end + 1));
+        }
+        return JSON.parse(text);
+    } catch (e) {
+        throw new Error("AI response was not valid JSON");
+    }
+  }
+
+  private async saveAnalysis(data: any) {
+    const strategyText = `${data.predicted_impact}`;
+
+    await pool.query(`
+      INSERT INTO pattern_matches
+      (current_event, historical_match, similarity_score, reasoning, predicted_impact, detected_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+    `, [
+      data.current_theme,
+      data.historical_match,
+      data.similarity_score,
+      data.reasoning,
+      strategyText
+    ]);
+  }
+}
+
+export default new ComprehensiveDataEngine();

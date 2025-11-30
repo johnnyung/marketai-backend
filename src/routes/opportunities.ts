@@ -1,14 +1,29 @@
-// src/routes/opportunities.ts
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import edgarService from '../services/edgarService.js';
+import tradingOpportunitiesService from '../services/tradingOpportunitiesService.js';
 
 const router = Router();
 
-/**
- * GET /api/opportunities/summary
- * Get opportunity counts (IPOs, SPACs)
- */
+// 1. WAR ROOM SIGNALS (The Watchlist Source)
+router.get('/signals', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 20;
+    const signals = await tradingOpportunitiesService.generateTradingSignals(limit);
+    
+    res.json({
+      success: true,
+      count: signals.length,
+      signals,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Signals Error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 2. EDGAR OPPORTUNITIES (Legacy/IPO)
 router.get('/summary', authenticateToken, async (req, res) => {
   try {
     const summary = await edgarService.getOpportunitySummary();
@@ -18,10 +33,6 @@ router.get('/summary', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * GET /api/opportunities/recent
- * Get recent IPO/SPAC filings
- */
 router.get('/recent', authenticateToken, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 20;
@@ -32,13 +43,8 @@ router.get('/recent', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * POST /api/opportunities/ingest
- * Manually trigger SEC filing ingestion
- */
 router.post('/ingest', authenticateToken, async (req, res) => {
   try {
-    console.log('📋 Manual SEC ingestion triggered');
     const result = await edgarService.ingestFilings();
     res.json(result);
   } catch (error: any) {

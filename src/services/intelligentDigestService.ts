@@ -39,7 +39,38 @@ interface AIAnalysis {
 
 class IntelligentDigestService {
   public pool: Pool;
-  
+    private sourceCounts: Record<string, { new: number; existing: number }> = {
+        'Stock Prices': { new: 0, existing: 0 },
+        'Options Flow': { new: 0, existing: 0 },
+        'Futures': { new: 0, existing: 0 },
+        'Market Indices': { new: 0, existing: 0 },
+        'ETF Flows': { new: 0, existing: 0 },
+        'Dark Pool': { new: 0, existing: 0 },
+        'Short Interest': { new: 0, existing: 0 },
+        'Crypto Prices': { new: 0, existing: 0 },
+        'Crypto Sentiment': { new: 0, existing: 0 },
+        'DeFi TVL': { new: 0, existing: 0 },
+        'Whale Movements': { new: 0, existing: 0 },
+        'Reddit': { new: 0, existing: 0 },
+        'Twitter/X': { new: 0, existing: 0 },
+        'StockTwits': { new: 0, existing: 0 },
+        'Financial News': { new: 0, existing: 0 },
+        'Fed Data': { new: 0, existing: 0 },
+        'NASDAQ Dividends': { new: 0, existing: 0 },
+        'SEC Filings': { new: 0, existing: 0 },
+        'Analyst Ratings': { new: 0, existing: 0 },
+        'Insider Trading': { new: 0, existing: 0 },
+        'Institutional': { new: 0, existing: 0 },
+        'Hedge Funds': { new: 0, existing: 0 },
+        'IPO Pipeline': { new: 0, existing: 0 },
+        'SPAC Mergers': { new: 0, existing: 0 },
+        'FDA Approvals': { new: 0, existing: 0 },
+        'Economic Indicators': { new: 0, existing: 0 },
+        'Treasury Yields': { new: 0, existing: 0 },
+        'US Department of Defense': { new: 0, existing: 0 },
+        'Dollar Index': { new: 0, existing: 0 },
+        'Commodities': { new: 0, existing: 0 }
+      };
   constructor() {
     this.pool = new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -75,20 +106,20 @@ class IntelligentDigestService {
       .filter((v, i, a) => a.indexOf(v) === i);
   }
   
-  async ingestAndStore(): Promise<{
-    collected: number;
-    processed: number;
-    stored: number;
-    duplicates: number;
-    stats: any;
-  }> {
-    console.log('\n🔄 === INTELLIGENT DIGEST INGESTION STARTED ===\n');
-    
-    const startTime = Date.now();
-    let collected = 0;
-    let stored = 0;
-    let duplicates = 0;
-    
+    async ingestAndStore(): Promise<{
+        collected: number;
+        processed: number;
+        stored: number;
+        duplicates: number;
+        stats: any;
+        sources: Record<string, { new: number; existing: number }>;
+      }> {    console.log('\n🔄 === INTELLIGENT DIGEST INGESTION STARTED ===\n');
+          
+          this.sourceCounts = {};
+          const startTime = Date.now();
+          let collected = 0;
+          let stored = 0;
+          let duplicates = 0;
     try {
       console.log('📡 Step 1: Collecting data from all sources...');
       const rawEntries = await this.collectAllData();
@@ -96,20 +127,34 @@ class IntelligentDigestService {
       console.log(`✅ Collected ${collected} raw entries\n`);
       
       console.log('🤖 Step 2: AI analyzing and categorizing...');
-      for (const entry of rawEntries) {
-        try {
-          if (!this.isValidDate(entry.eventTimestamp)) continue;
-          if (await this.isDuplicate(entry.contentHash)) {
-            duplicates++;
-            continue;
-          }
+        for (const entry of rawEntries) {
+                try {
+                  const sourceName = this.mapSourceName(entry.sourceName);
+                  if (!this.sourceCounts[sourceName]) {
+                    this.sourceCounts[sourceName] = { new: 0, existing: 0 };
+                  }
+                  
+                  if (!this.isValidDate(entry.eventTimestamp)) continue;
+                  if (await this.isDuplicate(entry.contentHash)) {
+                    duplicates++;
+                    this.sourceCounts[sourceName].existing++;
+                    continue;
+                  }
           
-          const analysis = await this.analyzeWithAI(entry);
-          
-          if (analysis.relevanceScore >= 40) {
-            await this.storeEntry(entry, analysis);
-            stored++;
-            
+                    const analysis = await this.analyzeWithAI(entry);
+                              //console.log(`📊 Analysis for ${entry.sourceName}: score=${analysis.relevanceScore}`);
+                              
+                              if (analysis.relevanceScore >= 5 || !analysis.relevanceScore) {
+                                try {
+                                  await this.storeEntry(entry, analysis);
+                                  stored++;
+                                  this.sourceCounts[sourceName].new++;
+                                  console.log(`✅ Stored entry with score ${analysis.relevanceScore}`);
+                                } catch (error: any) {
+                                  console.error(`❌ Failed to store: ${error.message}`);
+                                }
+                                this.sourceCounts[sourceName].new++;
+                                //console.log(`✅ Stored entry with score ${analysis.relevanceScore}`);
             for (const ticker of analysis.entities.tickers) {
               await this.updateTickerTracking(ticker, analysis);
             }
@@ -130,8 +175,7 @@ class IntelligentDigestService {
       console.log(`   Stored: ${stored}`);
       console.log(`   Duplicates: ${duplicates}\n`);
       
-      return { collected, processed: collected, stored, duplicates, stats };
-      
+        return { collected, processed: collected, stored, duplicates, stats, sources: this.sourceCounts };
     } catch (error) {
       console.error('❌ Digest ingestion failed:', error);
       throw error;
@@ -324,33 +368,9 @@ class IntelligentDigestService {
       }
     }
     
-    try {
-      const topTickers = await this.getTopTickers(3);
-      let technicalCount = 0;
-      
-      for (const ticker of topTickers) {
-        try {
-          const technical = await technicalIndicatorsService.getTechnicalIndicators(ticker);
-          if (technical) {
-            entries.push({
-              sourceType: 'technical_signal',
-              sourceName: 'Alpha Vantage',
-              rawData: technical,
-              eventTimestamp: new Date(),
-              contentHash: this.generateHash(`technical-${ticker}-${new Date().toDateString()}`)
-            });
-            technicalCount++;
-          }
-          await this.sleep(13000);
-        } catch {}
-      }
-      
-      console.log(`  ✓ Technical: ${technicalCount}/${topTickers.length} tickers analyzed`);
-    } catch (error: any) {
-      if (!this.isExpectedError(error)) {
-        console.error('  ✗ Technical analysis failed:', error.message);
-      }
-    }
+    
+    // Technical indicators disabled - causes Alpha Vantage timeouts
+    console.log('  ⚠️ Technical: 0/3 tickers analyzed (disabled)');
     
     return entries;
   }
@@ -694,6 +714,24 @@ class IntelligentDigestService {
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+    private mapSourceName(rawName: string): string {
+        const mapping: Record<string, string> = {
+          'SEC EDGAR': 'Insider Trading',
+          'Reddit WSB': 'Reddit',
+          'Reuters Business': 'Financial News',
+          'CNBC Breaking News': 'Financial News',
+          'MarketWatch Top Stories': 'Financial News',
+          'Federal Reserve': 'Fed Data',
+          'White House': 'Political News',
+          'SEC Press Releases': 'SEC Filings',
+          'BLS Economic News': 'Economic Indicators',
+          'Census Economic Indicators': 'Economic Indicators',
+          'Coinbase': 'Crypto Prices',
+          'Binance': 'Crypto Prices',
+          'Ethereum Foundation': 'Crypto Prices'
+        };
+        return mapping[rawName] || rawName;
+      }
 }
 
 export default new IntelligentDigestService();
