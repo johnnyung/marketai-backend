@@ -5,28 +5,14 @@ dotenv.config();
 
 const { Pool } = pg;
 
-const rawUrl = process.env.DATABASE_URL || '';
-const isInternal = rawUrl.includes('railway.internal');
-
-// DEBUG LOGGING (Masked)
-const maskedUrl = rawUrl.replace(/:[^:]*@/, ':***@');
-console.log(`🔌 DB Attempting Connection to: ${maskedUrl}`);
-console.log(`   Environment: ${process.env.NODE_ENV}`);
-console.log(`   Network Config: ${isInternal ? 'INTERNAL' : 'EXTERNAL'}`);
-
 const pool = new Pool({
-  connectionString: rawUrl,
-  // UNIVERSAL SSL FIX: 
-  // Enable SSL but trust the self-signed cert. 
-  // This works for both the Public Proxy AND the Internal Network if SSL is enabled there.
+  connectionString: process.env.DATABASE_URL,
+  // Since we are forcing the Public Proxy URL, we MUST use SSL
   ssl: { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000, // 10 seconds
-  max: 10
+  connectionTimeoutMillis: 10000
 });
 
-pool.on('error', (err) => {
-  console.error('❌ Idle Client Error:', err.message);
-});
+pool.on('error', (err) => console.error('❌ DB Error:', err));
 
 export const query = (text: string, params?: any[]) => pool.query(text, params);
 export const getClient = () => pool.connect();
