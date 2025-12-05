@@ -5,11 +5,20 @@ dotenv.config();
 
 const { Pool } = pg;
 
+const connectionString = process.env.DATABASE_URL;
+const isInternal = connectionString?.includes('railway.internal');
+
+console.log("🔌 DB Init:");
+console.log(`   Host Type: ${isInternal ? 'INTERNAL (Cloud)' : 'EXTERNAL (Proxy)'}`);
+console.log(`   SSL Mode:  ${isInternal ? 'DISABLED' : 'ENABLED (no-verify)'}`);
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  // FORCE SSL: We are using the public Proxy URL which demands SSL.
-  ssl: { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000,
+  connectionString: connectionString,
+  // CRITICAL FIX: 
+  // If Internal (railway.internal) -> SSL must be FALSE or undefined.
+  // If External (rlwy.net) -> SSL must be { rejectUnauthorized: false }.
+  ssl: isInternal ? false : { rejectUnauthorized: false },
+  connectionTimeoutMillis: 5000,
   max: 20
 });
 
