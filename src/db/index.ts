@@ -5,31 +5,17 @@ dotenv.config();
 
 const { Pool } = pg;
 
-const connectionString = process.env.DATABASE_URL;
-
-console.log("🔌 DB Config: Internal Network Mode");
-// IMPORTANT: Log the host to confirm we are using .internal
-// We hide the password for security
-if (connectionString) {
-  const parts = connectionString.split('@');
-  if (parts.length > 1) {
-    console.log(`   Target: ${parts[1]}`);
-  }
-}
+// Railway Internal (Cloud) = No SSL
+// Local/External = SSL
+const isInternal = process.env.DATABASE_URL?.includes('railway.internal');
 
 const pool = new Pool({
-  connectionString,
-  // Internal Railway connections MUST NOT use SSL
-  ssl: false,
-  connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 30000,
-  max: 20
+  connectionString: process.env.DATABASE_URL,
+  ssl: isInternal ? false : { rejectUnauthorized: false },
+  connectionTimeoutMillis: 10000
 });
 
-pool.on('error', (err) => {
-  // Suppress fatal crashes on idle client errors
-  console.error('❌ Idle Client Error:', err.message);
-});
+pool.on('error', (err) => console.error('❌ DB Pool Error:', err));
 
 export const query = (text: string, params?: any[]) => pool.query(text, params);
 export const getClient = () => pool.connect();
