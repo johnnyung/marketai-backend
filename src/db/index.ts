@@ -5,23 +5,11 @@ dotenv.config();
 
 const { Pool } = pg;
 
-// Get the connection string
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  console.error("❌ CRITICAL: DATABASE_URL is missing!");
-}
-
-// Logic: Only use SSL if we are connecting via the Public Proxy (.net)
-// Internal Railway connections (.internal) do not use SSL.
-const useSSL = connectionString?.includes('rlwy.net');
-
-console.log(`🔌 DB Config: ${useSSL ? 'SSL Mode (Public)' : 'Plain Mode (Internal)'}`);
-
 const pool = new Pool({
-  connectionString,
-  ssl: useSSL ? { rejectUnauthorized: false } : false,
-  connectionTimeoutMillis: 5000, // Fail fast
+  connectionString: process.env.DATABASE_URL,
+  // FORCE SSL: We are using the public Proxy URL which demands SSL.
+  ssl: { rejectUnauthorized: false },
+  connectionTimeoutMillis: 10000,
   max: 20
 });
 
