@@ -106,7 +106,7 @@ router.post('/clear', authenticateToken, async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
       return res.status(403).json({
         success: false,
-        error: 'Clear all cache is disabled in production'
+        error: 'Clear all cache is distabled in production'
       });
     }
     

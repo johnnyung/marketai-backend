@@ -1,0 +1,61 @@
+import express from 'express';
+import fmpService from '../services/fmpService.js';
+import pool from '../db/index.js';
+const router = express.Router();
+
+// GET /api/health/fmp
+router.get('/fmp', async (req, res) => {
+    try {
+        // Trigger lightweight probe if state is empty
+        if (fmpService.capabilities.quote === 'UNKNOWN') {
+            await fmpService.getPrice('AAPL');
+        }
+
+        const key = process.env.FMP_API_KEY || '';
+        const debug = fmpService.lastDebug || {};
+        
+        // Map capabilities to array format for frontend
+        const capList = Object.entries(fmpService.capabilities).map(([key, val]) => ({
+            id: key,
+            label: key.charAt(0).toUpperCase() + key.slice(1),
+            endpoint: 'dynamic', // placeholders
+            capability: val,
+            lastStatus: val === 'OK' ? 200 : val === 'UNAVAILABLE' ? 403 : null
+        }));
+
+        res.json({
+            status: fmpService.capabilities.quote === 'OK' ? "ONLINE" : "ERROR",
+            prefix: "/api/latest",
+            lastHTTP: debug.status || null,
+            capabilities: capList,
+            debug: {
+                url: debug.url,
+                error: debug.error
+            }
+        });
+    } catch (e: any) {
+        res.status(500).json({ status: "ERROR", error: e.message });
+    }
+});
+
+// GET /api/health/db
+router.get('/db', async (req, res) => {
+    try {
+        const client = await pool.connect();
+        client.release();
+        res.json({ connected: true });
+    } catch (e) {
+        res.json({ connected: false, error: (e as Error).message });
+    }
+});
+
+// GET /api/health/brain
+router.get('/brain', (req, res) => {
+    res.json({
+        enginesLoaded: 14, // Fixed count based on current architecture
+        mode: "Real Data",
+        lastRun: new Date().toISOString() // Placeholder for now
+    });
+});
+
+export default router;

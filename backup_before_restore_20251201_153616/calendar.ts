@@ -1,0 +1,155 @@
+import { Router } from 'express';
+import { db } from '../db/index.js';
+import economicCalendarService from '../services/economicCalendarService.js';
+
+const router = Router();
+
+// GET /api/calendar/events - Get economic calendar events
+router.get('/events', async (req, res) => {
+  try {
+    const { startDate, endDate, category, importance, country } = req.query;
+
+    let query = `
+      SELECT id, event_name, country, category, importance, 
+             scheduled_date, scheduled_time, actual_value, 
+             forecast_value, previous_value, currency
+      FROM economic_events
+      WHERE scheduled_date >= CURRENT_DATE
+    `;
+    const params: any[] = [];
+
+    if (startDate) {
+      params.push(startDate);
+      query += ` AND scheduled_date >= $${params.length}`;
+    }
+    if (endDate) {
+      params.push(endDate);
+      query += ` AND scheduled_date <= $${params.length}`;
+    }
+    if (category) {
+      params.push(category);
+      query += ` AND category = $${params.length}`;
+    }
+    if (importance) {
+      params.push(importance);
+      query += ` AND importance = $${params.length}`;
+    }
+    if (country) {
+      params.push(country);
+      query += ` AND country = $${params.length}`;
+    }
+
+    query += ` ORDER BY scheduled_date ASC, scheduled_time ASC NULLS LAST`;
+
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/calendar/today - Get today's events
+router.get('/today', async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT id, event_name, country, category, importance, 
+              scheduled_date, scheduled_time, actual_value, 
+              forecast_value, previous_value, currency
+       FROM economic_events
+       WHERE scheduled_date = CURRENT_DATE
+       ORDER BY scheduled_time ASC NULLS LAST`,
+      []
+    );
+
+    res.json(result.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/calendar/upcoming - Get upcoming week's events
+router.get('/upcoming', async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT id, event_name, country, category, importance, 
+              scheduled_date, scheduled_time, actual_value, 
+              forecast_value, previous_value, currency
+       FROM economic_events
+       WHERE scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
+       ORDER BY scheduled_date ASC, scheduled_time ASC NULLS LAST`,
+      []
+    );
+
+    res.json(result.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/calendar/fetch - Manually trigger calendar update from Finnhub
+router.post('/fetch', async (req, res) => {
+  try {
+    console.log('📅 Manual calendar fetch triggered');
+    const result = await economicCalendarService.fetchAndStoreEvents();
+    
+    res.json({
+      success: result.success,
+      message: result.message,
+      count: result.count
+    });
+  } catch (error: any) {
+    console.error('Calendar fetch error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+});
+
+// POST /api/calendar/seed - Legacy seed endpoint (now uses Finnhub)
+router.post('/seed', async (req, res) => {
+  try {
+    const result = await economicCalendarService.fetchAndStoreEvents();
+    res.json({
+      success: result.success,
+      message: result.message,
+      count: result.count
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/calendar/events - Add economic event (admin only)
+router.post('/events', async (req, res) => {
+  try {
+    const {
+      eventName,
+      country,
+      category,
+      importance,
+      scheduledDate,
+      scheduledTime,
+      actualValue,
+      forecastValue,
+      previousValue,
+      currency
+    } = req.body;
+
+    const result = await db.query(
+      `INSERT INTO economic_events (
+        event_name, country, category, importance, scheduled_date,
+        scheduled_time, actual_value, forecast_value, previous_value, currency
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *`,
+      [eventName, country, category, importance, scheduledDate, scheduledTime,
+       actualValue, forecastValue, previousValue, currency]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;

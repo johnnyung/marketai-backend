@@ -1,0 +1,126 @@
+import pool from '../db/index.js';
+import liveStatusService from './liveStatusService.js';
+import researchAgentService from './researchAgentService.js';
+import { collectInsiderTrades } from './collectors/insiderCollector.js';
+import { collectPoliticalData } from './collectors/politicalCollector.js';
+import { collectFinancialNews } from './collectors/newsCollector.js';
+import { collectYoutubeData } from './collectors/youtubeCollector.js';
+import { collectCongressTrades } from './collectors/congressCollector.js';
+import { collectWhaleActivity } from './collectors/whaleCollector.js';
+import { collectTariffNews } from './collectors/tariffCollector.js';
+import { collectApiData } from './collectors/apiDataCollector.js';
+import { collectSocialData } from './collectors/socialCollector.js';
+import { collectCoinGecko } from './collectors/cryptoCollector.js';
+import { collectFredData } from './collectors/fredCollector.js';
+
+export class MasterIngestionService {
+  
+  async runFullIngestion() {
+    console.log('🚀 STARTING LIVE VISUAL INGESTION...');
+    
+    // 1. NEWS & APIs
+    await this.processSource('news', 'News Feeds', collectFinancialNews);
+    await this.processSource('api_layer', 'Premium APIs', collectApiData); // Handles FMP/Finnhub
+
+    // 2. SPECIALIZED & INDEPENDENT
+    const sequence = [
+      { id: 'fred', name: 'FRED Data', fn: collectFredData }, // Runs independently now
+      { id: 'social_layer', name: 'Reddit', fn: collectSocialData },
+      { id: 'congress', name: 'Congress Trading', fn: collectCongressTrades },
+      { id: 'whale', name: 'Whale Alert', fn: collectWhaleActivity },
+      { id: 'tariff', name: 'Tariff Monitor', fn: collectTariffNews },
+      { id: 'youtube', name: 'YouTube', fn: collectYoutubeData },
+      { id: 'sec', name: 'SEC EDGAR', fn: collectInsiderTrades },
+      { id: 'whitehouse', name: 'White House', fn: collectPoliticalData },
+      { id: 'coingecko', name: 'CoinGecko', fn: collectCoinGecko }
+    ];
+
+    for (const task of sequence) {
+      await this.processSource(task.id, task.name, task.fn);
+      await this.sleep(800);
+    }
+
+    // 3. RESEARCH AGENT
+    await this.runAutonomousResearch();
+
+    return { success: true };
+  }
+
+  private async processSource(id: string, name: string, collectorFn: () => Promise<any[]>) {
+    // Only set scanning if it's a single widget source
+    if (!['social_layer', 'political', 'api_layer'].includes(id)) {
+         await await liveStatusService.update(id, 'scanning', 'Scanning...');
+    }
+    console.log(`🟡 Scanning ${name}...`);
+
+    try {
+      const items = await collectorFn();
+
+      if (!items || items.length === 0) {
+        if (!['social_layer', 'political', 'api_layer'].includes(id)) {
+             // Blue is safer than red for empty results
+             await await liveStatusService.update(id, 'cached', 'No new data', 0);
+        }
+        return;
+      }
+
+      const stats = await this.batchStore(items);
+      
+      if (!['social_layer', 'political', 'api_layer'].includes(id)) {
+          if (stats.inserted > 0) {
+            await await liveStatusService.update(id, 'new_data', `Found ${stats.inserted} items`, stats.total);
+          } else {
+            await await liveStatusService.update(id, 'cached', `Verified ${stats.total} items`, stats.total);
+          }
+      }
+    } catch (error: any) {
+      console.error(`${name} failed:`, error);
+      if (!['social_layer', 'political'].includes(id)) {
+        await await liveStatusService.update(id, 'error', 'Connection Failed');
+      }
+    }
+  }
+
+  private async batchStore(items: any[]): Promise<{ inserted: number, total: number }> {
+    let inserted = 0;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const item of items) {
+        if (!item.category) continue; 
+        const res = await client.query(`
+          INSERT INTO raw_intelligence (
+            category, source, external_id, title, content, url, 
+            published_at, tickers, raw_metadata, expires_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          ON CONFLICT (external_id) DO NOTHING
+          RETURNING id
+        `, [
+          item.category, item.source, item.external_id, item.title, 
+          item.content, item.url, item.published_at, item.tickers, 
+          JSON.stringify(item.raw_metadata), item.expires_at
+        ]);
+        if (res.rowCount && res.rowCount > 0) inserted++;
+      }
+      await client.query('COMMIT');
+    } catch (e) { await client.query('ROLLBACK'); } 
+    finally { client.release(); }
+    return { inserted, total: items.length };
+  }
+
+  private async runAutonomousResearch() {
+    await await liveStatusService.update('research_agent', 'scanning', 'Learning...');
+    try {
+      const res = await researchAgentService.expandKnowledgeBase();
+      await await liveStatusService.update('research_agent', res.expanded ? 'new_data' : 'cached', res.expanded ? 'New Knowledge' : 'Knowledge Verified', res.added);
+    } catch (e) {
+      await await liveStatusService.update('research_agent', 'error', 'Research Failed');
+    }
+  }
+
+  private sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+export default new MasterIngestionService();

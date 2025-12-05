@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-11-30T16:45:00",
+  "status": "COMPLETED",
+  "policy": "Minimum Viable Logic (MVL)",
+  "replacements": [
+    {
+      "service": "TechnicalAnalysisService",
+      "method": "calculateIndicators",
+      "fix": "Added RSI calculation from historical prices if FMP API unavailable."
+    },
+    {
+      "service": "InsiderIntentService",
+      "method": "analyzeIntent",
+      "fix": "Added deterministic Buy/Sell ratio calculation from real trade data."
+    },
+    {
+      "service": "MarketEchoService",
+      "method": "detectEchoes",
+      "fix": "Returns structured 'No Resonance' object in

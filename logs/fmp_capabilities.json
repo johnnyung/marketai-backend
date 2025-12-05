@@ -1,0 +1,107 @@
+{
+  "timestamp": "2025-12-02T03:55:57.948Z",
+  "score": 30,
+  "available_endpoints": 6,
+  "results": [
+    {
+      "endpoint": "getPrice",
+      "status": "AVAILABLE",
+      "details": "Object data received"
+    },
+    {
+      "endpoint": "getBatchPrices",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getDailyCandles",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getIntraday",
+      "status": "AVAILABLE",
+      "details": "Array[779] items"
+    },
+    {
+      "endpoint": "getPriceTargets",
+      "status": "AVAILABLE",
+      "details": "Array[1] items"
+    },
+    {
+      "endpoint": "getAnalystEstimates",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getInstitutionalHolders",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getInsiderTrades",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getEtfHoldings",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getOptionChain",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getEconomicData (GDP)",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getEconomicData (CPI)",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getEconomicData (PPI)",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getEconomicData (Unrate)",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getTreasuryRates",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getMarketNews",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getCompanyNews",
+      "status": "MISSING",
+      "details": "Returned null/empty"
+    },
+    {
+      "endpoint": "getCompanyProfile",
+      "status": "AVAILABLE",
+      "details": "Object data received"
+    },
+    {
+      "endpoint": "getKeyMetrics",
+      "status": "AVAILABLE",
+      "details": "Array[1] items"
+    },
+    {
+      "endpoint": "getFinancialRatios",
+      "status": "AVAILABLE",
+      "details": "Array[1] items"
+    }
+  ]
+}

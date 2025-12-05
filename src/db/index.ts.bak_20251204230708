@@ -1,0 +1,16 @@
+import pkg from "pg";
+const { Pool } = pkg;
+
+if (!process.env.DATABASE_URL) {
+  throw new Error("❌ DATABASE_URL missing");
+}
+
+// MARKETAI RULES:
+// - One Pool instance only
+// - ssl:false for backend logic
+// - NO default exports
+
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: false
+});

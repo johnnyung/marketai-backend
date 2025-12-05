@@ -1,48 +1,32 @@
-import { Router } from 'express';
-import { authService } from '../services/auth.js';
-import { authenticate } from '../middleware/auth.js';
+import express from "express";
+import { registerUser, loginUser, verifyUser } from "../services/auth.js";
 
-const router = Router();
+const router = express.Router();
 
-// POST /api/auth/register - Register new user
-router.post('/register', async (req, res) => {
+router.post("/register", async (req, res) => {
   try {
-    const { email, password, username } = req.body;
-
-    if (!email || !password || !username) {
-      return res.status(400).json({ error: 'Email, password, and username required' });
-    }
-
-    const result = await authService.register(email, password, username);
-    res.json(result);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    const user = await registerUser(req.body.email, req.body.username, req.body.password);
+    res.json({ success: true, user });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 
-// POST /api/auth/login - Login user
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
-
-    const result = await authService.login(email, password);
-    res.json(result);
-  } catch (error: any) {
-    res.status(401).json({ error: error.message });
+    const result = await loginUser(req.body.email, req.body.password);
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 
-// GET /api/auth/me - Get current user
-router.get('/me', authenticate, async (req, res) => {
+router.post("/verify/:id", async (req, res) => {
   try {
-    const user = await authService.getUserById(req.user!.userId);
-    res.json(user);
-  } catch (error: any) {
-    res.status(404).json({ error: error.message });
+    const user = await verifyUser(Number(req.params.id));
+    res.json({ success: true, user });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 

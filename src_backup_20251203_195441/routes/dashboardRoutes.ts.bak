@@ -1,0 +1,102 @@
+import express from 'express';
+import pool from '../db/index.js';
+
+const router = express.Router();
+
+// The Master Status Endpoint
+router.get('/status', async (req, res) => {
+  try {
+    // 1. Get Live "Scanning" States from Memory/DB Table
+    const liveRes = await pool.query("SELECT * FROM system_status");
+    const liveMap = new Map(liveRes.rows.map(r => [r.source_id, r]));
+
+    // 2. Define All Widgets to Track
+    const widgets = [
+      { id: 'research_agent', table: 'historical_events', timeCol: 'collected_at' },
+      { id: 'ai_analyst', table: 'pattern_matches', timeCol: 'detected_at' },
+      { id: 'news', filter: 'news' },
+      { id: 'congress', filter: 'Congress' },
+      { id: 'whale', filter: 'Whale' },
+      { id: 'tariff', filter: 'Tariff' },
+      { id: 'youtube', filter: 'YouTube' },
+      { id: 'sec', filter: 'SEC' },
+      { id: 'whitehouse', filter: 'White House' },
+      { id: 'coingecko', filter: 'CoinGecko' },
+      { id: 'alpha', filter: 'Alpha Vantage' },
+      { id: 'finnhub', filter: 'Finnhub' },
+      { id: 'fmp', filter: 'FMP' },
+      { id: 'fred', filter: 'FRED' },
+      { id: 'reddit', filter: 'Reddit' }
+    ];
+
+    const statusData = {};
+
+    for (const w of widgets) {
+        // A. Check if currently scanning (Yellow)
+        const live = liveMap.get(w.id);
+        if (live && live.status === 'scanning') {
+            statusData[w.id] = { status: 'scanning', message: live.message, count: live.count };
+            continue;
+        }
+
+        // B. Check Data Freshness (Green/Blue/Red)
+        let lastTime = null;
+        let count = 0;
+
+        try {
+            if (w.table) {
+                // System Tables
+                const res = await pool.query(`SELECT MAX(${w.timeCol}) as last, COUNT(*) as c FROM ${w.table}`);
+                lastTime = res.rows[0].last;
+                count = parseInt(res.rows[0].c || '0');
+            } else {
+                // Raw Intelligence Table
+                const res = await pool.query(`
+                    SELECT MAX(created_at) as last, COUNT(*) as c
+                    FROM raw_intelligence
+                    WHERE source ILIKE $1 OR source_name ILIKE $1
+                `, [`%${w.filter}%`]);
+                lastTime = res.rows[0].last;
+                count = parseInt(res.rows[0].c || '0');
+            }
+        } catch (e) {}
+
+        let finalStatus = 'inactive';
+        let finalMessage = 'Waiting...';
+
+        if (lastTime) {
+            const date = new Date(lastTime);
+            const minsAgo = (Date.now() - date.getTime()) / 60000;
+            
+            if (minsAgo < 15) {
+                finalStatus = 'new_data'; // Green
+                finalMessage = `Fresh: ${Math.round(minsAgo)}m ago`;
+            } else if (minsAgo < 1440) {
+                finalStatus = 'cached';   // Blue
+                finalMessage = `Cached: ${Math.round(minsAgo/60)}h ago`;
+            } else {
+                finalStatus = 'error';    // Red (Stale)
+                finalMessage = 'Data Stale (>24h)';
+            }
+        } else {
+            // If we have a live error state, show it
+            if (live && live.status === 'error') {
+                finalStatus = 'error';
+                finalMessage = live.message || 'Failed';
+            }
+        }
+
+        statusData[w.id] = {
+            status: finalStatus,
+            message: finalMessage,
+            count: count
+        };
+    }
+
+    res.json({ success: true, data: statusData });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+export default router;

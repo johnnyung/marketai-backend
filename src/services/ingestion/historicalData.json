@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Dot-Com Bubble",
+    "category": "BUBBLE",
+    "startDate": "1999-01-01",
+    "endDate": "2002-10-01",
+    "affectedSectors": ["Technology", "Telecom"],
+    "narrativeSummary": "Excessive speculation in internet-related companies."
+  },
+  {
+    "name": "2008 Financial Crisis",
+    "category": "CRISIS",
+    "startDate": "2007-12-01",
+    "endDate": "2009-06-01",
+    "affectedSectors": ["Financials", "Real Estate"],
+    "narrativeSummary": "Subprime mortgage crisis leading to global banking collapse."
+  },
+  {
+    "name": "COVID-19 Crash",
+    "category": "CRISIS",
+    "startDate": "2020-02-20",
+    "endDate": "2020-04-07",
+    "affectedSectors": ["Travel", "Energy", "Hospitality"],
+    "narrativeSummary": "Global pandemic induced lockdowns and rapid market correction."
+  },
+  {
+    "name": "2022 Inflation Shock",
+    "category": "POLICY",
+    "startDate": "2022-01-01",
+    "endDate": "2023-01-01",
+    "affectedSectors": ["Technology", "Consumer Discretionary"],
+    "narrativeSummary": "Rapid rate hikes to combat post-pandemic inflation."
+  }
+]

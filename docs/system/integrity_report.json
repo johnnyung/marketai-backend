@@ -1,0 +1,393 @@
+{
+  "timestamp": "2025-12-01T04:09:33.033Z",
+  "summary": {
+    "static_issues": 60,
+    "runtime_tests": 4,
+    "runtime_passed": 3,
+    "status": "WARNING"
+  },
+  "runtime_diagnostics": [
+    {
+      "check": "API Connection (FMP)",
+      "status": "FAIL",
+      "details": "FMP Unreachable (Invalid Key or Rate Limit)"
+    },
+    {
+      "check": "Dynamic Universe",
+      "status": "PASS",
+      "details": "Universe contains 14 tickers"
+    },
+    {
+      "check": "Top 3 Integrity",
+      "status": "PASS",
+      "details": "Generated 3 picks. Top: AAPL (65%)"
+    },
+    {
+      "check": "Portfolio Engine",
+      "status": "PASS",
+      "details": "Analyzed 0 positions. Risk: LOW"
+    }
+  ],
+  "static_anomalies": [
+    {
+      "file": "src/routes/eventIntelligenceRoutes.ts",
+      "line": 53,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch (e) { return []; }"
+    },
+    {
+      "file": "src/services/adaptiveLearningService.ts",
+      "line": 3,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getPriorities(source_hint: string) { return "
+    },
+    {
+      "file": "src/services/anomalyDetectionService.ts",
+      "line": 6,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getTopAnomalies() { return []; }"
+    },
+    {
+      "file": "src/services/anomalyDetectionService.ts",
+      "line": 7,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getHeatmapData() { return []; }"
+    },
+    {
+      "file": "src/services/chainReactionService.ts",
+      "line": 103,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch (e) { return []; }"
+    },
+    {
+      "file": "src/services/collectors/apiDataCollector.ts",
+      "line": 5,
+      "issue": "Hardcoded ticker array detected",
+      "snippet": "async collectAll(universe: string[] = ['AAPL', 'MS"
+    },
+    {
+      "file": "src/services/correlationAnalysisService.ts",
+      "line": 19,
+      "issue": "Non-deterministic logic detected",
+      "snippet": "const move = quote.changePercent || (Math.random()"
+    },
+    {
+      "file": "src/services/cryptoIntelligence.ts",
+      "line": 63,
+      "issue": "Explicit mock variable detected",
+      "snippet": "const mockWhales = ["
+    },
+    {
+      "file": "src/services/cryptoIntelligence.ts",
+      "line": 136,
+      "issue": "Explicit mock variable detected",
+      "snippet": "const mockFlows = ["
+    },
+    {
+      "file": "src/services/cryptoIntelligence.ts",
+      "line": 198,
+      "issue": "Explicit mock variable detected",
+      "snippet": "const mockSentiment = ["
+    },
+    {
+      "file": "src/services/cryptoIntelligence.ts",
+      "line": 254,
+      "issue": "Explicit mock variable detected",
+      "snippet": "const mockCorrelations = ["
+    },
+    {
+      "file": "src/services/cryptoIntelligenceService.ts",
+      "line": 26,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getWhaleTransactions(): Promise<WhaleTransac"
+    },
+    {
+      "file": "src/services/cryptoIntelligenceService.ts",
+      "line": 27,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getExchangeAnnouncements() { return []; }"
+    },
+    {
+      "file": "src/services/dataIngestionService.ts",
+      "line": 41,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchPoliticalTrades() { return []; }"
+    },
+    {
+      "file": "src/services/dataIngestionService.ts",
+      "line": 42,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchInsiderActivity() { return []; }"
+    },
+    {
+      "file": "src/services/dataIngestionService.ts",
+      "line": 43,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchEconomicCalendar() { return []; }"
+    },
+    {
+      "file": "src/services/dataIngestionService.ts",
+      "line": 45,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getDataForTicker(ticker: string) { return []"
+    },
+    {
+      "file": "src/services/dataIngestionService.ts",
+      "line": 46,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getDataByType(type: string) { return []; }"
+    },
+    {
+      "file": "src/services/dataVerificationService.ts",
+      "line": 120,
+      "issue": "Explicit mock variable detected",
+      "snippet": "const mockCount = parseInt(row.mock_count);"
+    },
+    {
+      "file": "src/services/deepDiveService.ts",
+      "line": 49,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getTodaysCachedAnalyses() { return []; }"
+    },
+    {
+      "file": "src/services/earningsIntelligence.ts",
+      "line": 56,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchEarningsSurprises() { return []; }"
+    },
+    {
+      "file": "src/services/earningsIntelligence.ts",
+      "line": 57,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchEarningsPatterns() { return []; }"
+    },
+    {
+      "file": "src/services/enhancedPoliticalIntelligence.ts",
+      "line": 43,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchCommitteeData() { return []; }"
+    },
+    {
+      "file": "src/services/enhancedPoliticalIntelligence.ts",
+      "line": 44,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchLobbyingData() { return []; }"
+    },
+    {
+      "file": "src/services/enhancedPoliticalIntelligence.ts",
+      "line": 45,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchCampaignContributions() { return []; }"
+    },
+    {
+      "file": "src/services/enhancedPoliticalIntelligence.ts",
+      "line": 46,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchVotingRecords() { return []; }"
+    },
+    {
+      "file": "src/services/enhancedSocial.ts",
+      "line": 25,
+      "issue": "Empty array stub function detected",
+      "snippet": "private async fetchTwitter() { return []; }"
+    },
+    {
+      "file": "src/services/enhancedSocial.ts",
+      "line": 26,
+      "issue": "Empty array stub function detected",
+      "snippet": "private async fetchStockTwits() { return []; }"
+    },
+    {
+      "file": "src/services/enhancedSocial.ts",
+      "line": 27,
+      "issue": "Empty array stub function detected",
+      "snippet": "private async fetchDiscord() { return []; }"
+    },
+    {
+      "file": "src/services/fmpService.ts",
+      "line": 159,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getOptionChain(ticker: string) { return []; "
+    },
+    {
+      "file": "src/services/fmpService.ts",
+      "line": 162,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getFredSeries(id: string) { return []; }"
+    },
+    {
+      "file": "src/services/governmentDataService.ts",
+      "line": 48,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch(e) { return []; }"
+    },
+    {
+      "file": "src/services/historicalDataService.ts",
+      "line": 68,
+      "issue": "Non-deterministic logic detected",
+      "snippet": "const agent = USER_AGENTS[Math.floor(Math.random()"
+    },
+    {
+      "file": "src/services/institutionalIntelligence.ts",
+      "line": 38,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetch13FFilings() { return []; }"
+    },
+    {
+      "file": "src/services/institutionalIntelligence.ts",
+      "line": 39,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchWhaleTrades() { return []; }"
+    },
+    {
+      "file": "src/services/institutionalIntelligence.ts",
+      "line": 40,
+      "issue": "Empty array stub function detected",
+      "snippet": "async fetchShortInterest() { return []; }"
+    },
+    {
+      "file": "src/services/lazarusService.ts",
+      "line": 27,
+      "issue": "Non-deterministic logic detected",
+      "snippet": "const agent = AGENTS[Math.floor(Math.random() * AG"
+    },
+    {
+      "file": "src/services/macroIntelligence.ts",
+      "line": 62,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch (e) { return []; }"
+    },
+    {
+      "file": "src/services/macroIntelligence.ts",
+      "line": 66,
+      "issue": "Empty array stub function detected",
+      "snippet": "private async fetchFedSignals() { return []; }"
+    },
+    {
+      "file": "src/services/macroIntelligence.ts",
+      "line": 67,
+      "issue": "Empty array stub function detected",
+      "snippet": "private async fetchDollarStrength() { return []; }"
+    },
+    {
+      "file": "src/services/macroIntelligence.ts",
+      "line": 68,
+      "issue": "Empty array stub function detected",
+      "snippet": "private async fetchCommoditySignals() { return [];"
+    },
+    {
+      "file": "src/services/macroIntelligence.ts",
+      "line": 69,
+      "issue": "Empty array stub function detected",
+      "snippet": "private async fetchGlobalMarkets() { return []; }"
+    },
+    {
+      "file": "src/services/newsApiService.ts",
+      "line": 88,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch(e) { return []; }"
+    },
+    {
+      "file": "src/services/predictionLoggerService.ts",
+      "line": 67,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch (e) { return []; }"
+    },
+    {
+      "file": "src/services/priceUpdaterService.ts",
+      "line": 115,
+      "issue": "Explicit mock variable detected",
+      "snippet": "const mockInvestment = 100.00;"
+    },
+    {
+      "file": "src/services/realDataCollector.ts",
+      "line": 32,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getRealMarketData() { return []; }"
+    },
+    {
+      "file": "src/services/realDataCollector.ts",
+      "line": 33,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getRealCryptoData() { return []; }"
+    },
+    {
+      "file": "src/services/realDataCollector.ts",
+      "line": 34,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getRealRedditData() { return []; }"
+    },
+    {
+      "file": "src/services/realDataCollector.ts",
+      "line": 37,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getLatestPrices() { return []; }"
+    },
+    {
+      "file": "src/services/redditService.ts",
+      "line": 13,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getStocksPosts(limit: number = 25) { return "
+    },
+    {
+      "file": "src/services/redditService.ts",
+      "line": 14,
+      "issue": "Empty array stub function detected",
+      "snippet": "async getInvestingPosts(limit: number = 25) { retu"
+    },
+    {
+      "file": "src/services/redditService.ts",
+      "line": 16,
+      "issue": "Empty array stub function detected",
+      "snippet": "async extractTickerMentions(posts: any[]) { return"
+    },
+    {
+      "file": "src/services/selfImprovementService.ts",
+      "line": 89,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch (e) { return []; }"
+    },
+    {
+      "file": "src/services/socialSentimentService.ts",
+      "line": 72,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch (e) { return []; }"
+    },
+    {
+      "file": "src/services/socialSentimentService.ts",
+      "line": 93,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch(e) { return []; }"
+    },
+    {
+      "file": "src/services/socialSentimentService.ts",
+      "line": 107,
+      "issue": "Empty array stub function detected",
+      "snippet": "} catch(e) { return []; }"
+    },
+    {
+      "file": "src/services/technicalAnalysis.ts",
+      "line": 63,
+      "issue": "Empty array stub function detected",
+      "snippet": "async detectPatterns(ticker: string) { return []; "
+    },
+    {
+      "file": "src/services/technicalAnalysis.ts",
+      "line": 64,
+      "issue": "Empty array stub function detected",
+      "snippet": "async calculateCorrelations() { return []; }"
+    },
+    {
+      "file": "src/utils/mockPurgeToolkit.ts",
+      "line": 6,
+      "issue": "Explicit mock variable detected",
+      "snippet": "export const MockPurgeToolkit = {"
+    },
+    {
+      "file": "src/utils/mockPurgeToolkit.ts",
+      "line": 60,
+      "issue": "Non-deterministic logic detected",
+      "snippet": "* Strictly forbids Math.random()."
+    }
+  ]
+}

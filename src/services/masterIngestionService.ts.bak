@@ -1,125 +1,161 @@
 import pool from '../db/index.js';
 import liveStatusService from './liveStatusService.js';
 import researchAgentService from './researchAgentService.js';
-import { collectInsiderTrades } from './collectors/insiderCollector.js';
-import { collectPoliticalData } from './collectors/politicalCollector.js';
+import sectorDiscoveryService from './sectorDiscoveryService.js';
+import marketDataService from './marketDataService.js';
+import anomalyDetectionService from './anomalyDetectionService.js';
+import newsImpactEngine from './newsImpactEngine.js'; // NIE v2.0
+
+// Collectors
 import { collectFinancialNews } from './collectors/newsCollector.js';
-import { collectYoutubeData } from './collectors/youtubeCollector.js';
+import { collectApiData } from './collectors/apiDataCollector.js';
+import { collectFredData } from './collectors/fredCollector.js';
 import { collectCongressTrades } from './collectors/congressCollector.js';
 import { collectWhaleActivity } from './collectors/whaleCollector.js';
 import { collectTariffNews } from './collectors/tariffCollector.js';
-import { collectApiData } from './collectors/apiDataCollector.js';
-import { collectSocialData } from './collectors/socialCollector.js';
+import { collectYoutubeData } from './collectors/youtubeCollector.js';
+import { collectInsiderTrades } from './collectors/insiderCollector.js';
+import { collectPoliticalData } from './collectors/politicalCollector.js';
 import { collectCoinGecko } from './collectors/cryptoCollector.js';
-import { collectFredData } from './collectors/fredCollector.js';
+
+// Extended Services
+import expandedSocialService from './expandedSocialService.js';
+import manufacturingSupplyChainService from './manufacturingSupplyChainService.js';
+import governmentDataService from './governmentDataService.js';
+import newsEmbeddingService from './newsEmbeddingService.js';
+import redditService from './redditService.js';
 
 export class MasterIngestionService {
   
+  private async ensureWidgetStatus() {
+      const widgets = ['news','fmp','alpha','coingecko','fred','congress','whitehouse','tariff','social','whale','youtube','sec','manufacturing','defense'];
+      for(const id of widgets) {
+          await pool.query(`
+            INSERT INTO system_status (source_id, status, message, count, last_updated)
+            VALUES ($1, 'cached', 'Ready', 0, NOW()) ON CONFLICT (source_id) DO NOTHING
+          `, [id]);
+      }
+  }
+
   async runFullIngestion() {
-    console.log('🚀 STARTING LIVE VISUAL INGESTION...');
+    console.log('🚀 STARTING LIVE VISUAL INGESTION (v113.1)...');
+    await this.ensureWidgetStatus();
     
-    // 1. NEWS & APIs
+    await this.runSectorDragnet();
+
+    // Primary Collectors
     await this.processSource('news', 'News Feeds', collectFinancialNews);
-    await this.processSource('api_layer', 'Premium APIs', collectApiData); // Handles FMP/Finnhub
+    await this.processSource('fmp', 'Market Data', collectApiData);
+    await this.processSource('coingecko', 'CoinGecko', collectCoinGecko);
+    await this.processSource('fred', 'FRED Data', collectFredData);
+    await this.processSource('congress', 'Congress Trading', collectCongressTrades);
+    await this.processSource('whitehouse', 'White House', collectPoliticalData);
+    await this.processSource('tariff', 'Tariff Monitor', collectTariffNews);
+    await this.processSource('whale', 'Whale Alert', collectWhaleActivity);
+    await this.processSource('youtube', 'YouTube', collectYoutubeData);
+    await this.processSource('sec', 'SEC EDGAR', collectInsiderTrades);
 
-    // 2. SPECIALIZED & INDEPENDENT
-    const sequence = [
-      { id: 'fred', name: 'FRED Data', fn: collectFredData }, // Runs independently now
-      { id: 'social_layer', name: 'Reddit', fn: collectSocialData },
-      { id: 'congress', name: 'Congress Trading', fn: collectCongressTrades },
-      { id: 'whale', name: 'Whale Alert', fn: collectWhaleActivity },
-      { id: 'tariff', name: 'Tariff Monitor', fn: collectTariffNews },
-      { id: 'youtube', name: 'YouTube', fn: collectYoutubeData },
-      { id: 'sec', name: 'SEC EDGAR', fn: collectInsiderTrades },
-      { id: 'whitehouse', name: 'White House', fn: collectPoliticalData },
-      { id: 'coingecko', name: 'CoinGecko', fn: collectCoinGecko }
-    ];
+    // Extended Intelligence
+    await this.runExtendedCollector('social', 'Reddit/Social', async () => {
+        await redditService.getWallStreetBetsHot(25);
+        const posts = await expandedSocialService.getRedditInvestingSentiment();
+        return posts.map(p => ({ ...p, category: 'social', source: p.source }));
+    });
 
-    for (const task of sequence) {
-      await this.processSource(task.id, task.name, task.fn);
-      await this.sleep(800);
-    }
+    await this.runExtendedCollector('manufacturing', 'Supply Chain', async () => {
+        const data = await manufacturingSupplyChainService.getManufacturingData();
+        return data.map(d => ({ ...d, category: 'manufacturing', source: d.source }));
+    });
 
-    // 3. RESEARCH AGENT
+    await this.runExtendedCollector('defense', 'Defense Dept', async () => {
+        const data = await governmentDataService.getDefenseContracts();
+        return data.map(d => ({ ...d, category: 'government', source: 'Defense Dept' }));
+    });
+
+    await anomalyDetectionService.processRecentEntries();
     await this.runAutonomousResearch();
 
     return { success: true };
   }
 
-  private async processSource(id: string, name: string, collectorFn: () => Promise<any[]>) {
-    // Only set scanning if it's a single widget source
-    if (!['social_layer', 'political', 'api_layer'].includes(id)) {
-         await await liveStatusService.update(id, 'scanning', 'Scanning...');
-    }
-    console.log(`🟡 Scanning ${name}...`);
+  private async runSectorDragnet() {
+      console.log("   🕸️  Running Sector Dragnet (Wide-Net)...");
+      const targets = await sectorDiscoveryService.getExpandedUniverse();
+      console.log(`      -> Tracking ${targets.length} assets in active universe.`);
+  }
 
+  private async processSource(id: string, name: string, collectorFn: () => Promise<any[]>) {
+    liveStatusService.update(id, 'scanning', 'Scanning...');
     try {
       const items = await collectorFn();
-
       if (!items || items.length === 0) {
-        if (!['social_layer', 'political', 'api_layer'].includes(id)) {
-             // Blue is safer than red for empty results
-             await await liveStatusService.update(id, 'cached', 'No new data', 0);
-        }
+        liveStatusService.update(id, 'cached', 'Active', 0);
         return;
       }
-
       const stats = await this.batchStore(items);
       
-      if (!['social_layer', 'political', 'api_layer'].includes(id)) {
-          if (stats.inserted > 0) {
-            await await liveStatusService.update(id, 'new_data', `Found ${stats.inserted} items`, stats.total);
-          } else {
-            await await liveStatusService.update(id, 'cached', `Verified ${stats.total} items`, stats.total);
-          }
+      // --- NIE INTEGRATION ---
+      if (id === 'news' || id === 'whitehouse' || id === 'sec' || id === 'tariff') {
+          await newsImpactEngine.analyzeBatch(items);
       }
+      // -----------------------
+
+      liveStatusService.update(id, 'new_data', `Found ${stats.inserted}`, stats.inserted);
     } catch (error: any) {
-      console.error(`${name} failed:`, error);
-      if (!['social_layer', 'political'].includes(id)) {
-        await await liveStatusService.update(id, 'error', 'Connection Failed');
-      }
+      liveStatusService.update(id, 'error', 'Failed');
+      console.error(`   ❌ ${name} Failed:`, error.message);
     }
   }
 
-  private async batchStore(items: any[]): Promise<{ inserted: number, total: number }> {
-    let inserted = 0;
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      for (const item of items) {
-        if (!item.category) continue; 
-        const res = await client.query(`
-          INSERT INTO raw_intelligence (
-            category, source, external_id, title, content, url, 
-            published_at, tickers, raw_metadata, expires_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-          ON CONFLICT (external_id) DO NOTHING
-          RETURNING id
-        `, [
-          item.category, item.source, item.external_id, item.title, 
-          item.content, item.url, item.published_at, item.tickers, 
-          JSON.stringify(item.raw_metadata), item.expires_at
-        ]);
-        if (res.rowCount && res.rowCount > 0) inserted++;
+  private async runExtendedCollector(id: string, name: string, collectorFn: () => Promise<any[]>) {
+      liveStatusService.update(id, 'scanning', 'Scanning...');
+      try {
+          const items = await collectorFn();
+          if (items.length > 0) {
+              const stats = await this.batchStore(items);
+              liveStatusService.update(id, 'new_data', `Found ${stats.inserted}`, stats.inserted);
+          } else {
+              liveStatusService.update(id, 'cached', 'Monitoring', 0);
+          }
+      } catch (e: any) {
+          liveStatusService.update(id, 'error', 'Failed');
       }
-      await client.query('COMMIT');
-    } catch (e) { await client.query('ROLLBACK'); } 
-    finally { client.release(); }
+  }
+
+  private async batchStore(items: any[]) {
+    let inserted = 0;
+    for (const item of items) {
+        try {
+            const contentHash = item.external_id || item.url || JSON.stringify(item);
+            await pool.query(`
+              INSERT INTO raw_data_collection (source_type, source_name, data_json, collected_at)
+              VALUES ($1, $2, $3, NOW())
+            `, [item.category || 'general', item.source || 'Unknown', JSON.stringify(item)]);
+            
+            if (item.title) {
+                 const res = await pool.query(`
+                    INSERT INTO digest_entries (source_type, source_name, ai_summary, ai_relevance_score, ai_sentiment, event_date, content_hash, created_at)
+                    VALUES ($1, $2, $3, 50, 'neutral', NOW(), $4, NOW())
+                    ON CONFLICT (content_hash) DO NOTHING
+                    RETURNING id
+                 `, [item.category || 'general', item.source || 'Unknown', item.title, contentHash]);
+                 
+                 if (res.rows.length > 0) {
+                     await newsEmbeddingService.processEntry(res.rows[0].id, item.title);
+                 }
+            }
+            inserted++;
+        } catch(e) {}
+    }
     return { inserted, total: items.length };
   }
 
   private async runAutonomousResearch() {
-    await await liveStatusService.update('research_agent', 'scanning', 'Learning...');
+    liveStatusService.update('research_agent', 'scanning', 'Analyzing...');
     try {
-      const res = await researchAgentService.expandKnowledgeBase();
-      await await liveStatusService.update('research_agent', res.expanded ? 'new_data' : 'cached', res.expanded ? 'New Knowledge' : 'Knowledge Verified', res.added);
-    } catch (e) {
-      await await liveStatusService.update('research_agent', 'error', 'Research Failed');
-    }
-  }
-
-  private sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+      const result: any = await researchAgentService.expandKnowledgeBase();
+      liveStatusService.update('research_agent', result.expanded ? 'new_data' : 'cached', result.expanded ? 'New Insights' : 'Monitoring', result.added || 0);
+    } catch (e) { liveStatusService.update('research_agent', 'error', 'Timeout'); }
   }
 }
 

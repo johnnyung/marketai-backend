@@ -1,0 +1,212 @@
+{
+  "timestamp": "2025-12-02T04:09:12.655Z",
+  "system_status": "DEGRADED",
+  "engines": {
+    "fsi": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        67,
+        67,
+        67
+      ]
+    },
+    "ace": {
+      "status": "MISSING",
+      "valid": true,
+      "scope": "TICKER",
+      "static": true,
+      "values": [
+        0,
+        0,
+        0
+      ]
+    },
+    "insider": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        60,
+        40,
+        60
+      ]
+    },
+    "gamma": {
+      "status": "STUCK",
+      "valid": false,
+      "scope": "TICKER",
+      "static": true,
+      "values": [
+        100,
+        100,
+        100
+      ]
+    },
+    "narrative": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        100,
+        100,
+        85
+      ]
+    },
+    "mlp": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "GLOBAL",
+      "static": true,
+      "values": [
+        50,
+        50,
+        50
+      ]
+    },
+    "volsurf": {
+      "status": "MISSING",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        0,
+        0,
+        0
+      ]
+    },
+    "ife": {
+      "status": "MISSING",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        0,
+        0,
+        0
+      ]
+    },
+    "gnae": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "GLOBAL",
+      "static": true,
+      "values": [
+        75,
+        75,
+        75
+      ]
+    },
+    "uoa": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        80,
+        80,
+        80
+      ]
+    },
+    "scs": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "GLOBAL",
+      "static": true,
+      "values": [
+        70,
+        70,
+        70
+      ]
+    },
+    "hfai": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        75,
+        75,
+        40
+      ]
+    },
+    "dve": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        70,
+        70,
+        70
+      ]
+    },
+    "seas": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        70,
+        30,
+        70
+      ]
+    },
+    "mbe": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "GLOBAL",
+      "static": true,
+      "values": [
+        30,
+        30,
+        30
+      ]
+    },
+    "vre": {
+      "status": "MISSING",
+      "valid": true,
+      "scope": "TICKER",
+      "static": true,
+      "values": [
+        0,
+        0,
+        0
+      ]
+    },
+    "gmf": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "GLOBAL",
+      "static": true,
+      "values": [
+        30,
+        30,
+        30
+      ]
+    },
+    "shadow": {
+      "status": "REAL",
+      "valid": true,
+      "scope": "TICKER",
+      "static": false,
+      "values": [
+        46,
+        51,
+        14
+      ]
+    }
+  },
+  "scoring": {
+    "values": [
+      67,
+      62,
+      63
+    ],
+    "status": "DYNAMIC"
+  }
+}

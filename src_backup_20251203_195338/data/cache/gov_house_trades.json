@@ -1,0 +1,12 @@
+[
+  {
+    "disclosure_year": 2025,
+    "transaction_date": "2025-11-20",
+    "owner": "self",
+    "ticker": "NVDA",
+    "asset_description": "Nvidia Corp",
+    "type": "purchase",
+    "amount": "$15,001 - $50,000",
+    "representative": "Nancy Pelosi"
+  }
+]

@@ -1,0 +1,260 @@
+import axios from 'axios';
+import { Candle } from '../types/dataProviderTypes.js';
+
+/**
+ * FMP Service (Stable API Edition)
+ * --------------------------------
+ * Base URL: https://financialmodelingprep.com/stable
+ * Pattern:  /endpoint?symbol=TICKER
+ * Status:   Paid Tier Compatible (No Legacy v3)
+ */
+class FmpService {
+  private apiKey: string;
+  private baseUrl = 'https://financialmodelingprep.com/stable';
+
+  public lastDebug: {
+    url?: string;
+    method?: string;
+    status?: number;
+    error?: string;
+    rawPreview?: string;
+    timestamp?: string;
+  } = {};
+
+  constructor() {
+    this.apiKey = process.env.FMP_API_KEY || '';
+    if (!this.apiKey) {
+        console.error('[FMP] CRITICAL: API Key is undefined in process.env');
+    } else {
+        console.log(`[FMP] Service Init. Key Prefix: ${this.apiKey.substring(0, 4)}...`);
+    }
+  }
+
+  private async fetchData(endpoint: string, queryParams: string = ''): Promise<any> {
+    if (!this.apiKey) {
+        this.lastDebug = { error: 'Missing API Key', timestamp: new Date().toISOString() };
+        return null;
+    }
+    
+    try {
+      // Stable API uses clean endpoints (e.g. 'quote', 'profile') without 'v3' prefix
+      const path = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+      
+      // Construct Query: ?symbol=AAPL&apikey=KEY
+      const qs = queryParams ? `&${queryParams}` : '';
+      const url = `${this.baseUrl}/${path}?apikey=${this.apiKey}${qs}`;
+      
+      // Logging
+      const maskedUrl = url.replace(this.apiKey, 'HIDDEN');
+      console.log(`[FMP] GET ${maskedUrl}`);
+      
+      this.lastDebug = {
+          url: maskedUrl,
+          method: 'GET',
+          timestamp: new Date().toISOString()
+      };
+
+      const response = await axios.get(url, { timeout: 12000 });
+      
+      this.lastDebug.status = response.status;
+
+      if (response.status !== 200) {
+          console.error(`[FMP] HTTP Error ${response.status}: ${response.statusText}`);
+          return null;
+      }
+
+      const data = response.data;
+
+      // FMP Stable sometimes returns empty arrays for missing data
+      if (Array.isArray(data) && data.length === 0) {
+          // console.warn(`[FMP] Empty array for ${endpoint}`);
+          return [];
+      }
+
+      if (data && data['Error Message']) {
+          console.warn(`[FMP] API Error: ${data['Error Message']}`);
+          this.lastDebug.error = data['Error Message'];
+          return null;
+      }
+
+      return data;
+
+    } catch (error: any) {
+      const status = error.response?.status || 0;
+      const msg = error.message;
+      this.lastDebug.status = status;
+      this.lastDebug.error = msg;
+      
+      if (status === 403) {
+          console.error(`[FMP] 403 Forbidden (Plan Restriction) for: ${endpoint}`);
+      } else if (status === 404) {
+          console.error(`[FMP] 404 Not Found (Invalid Endpoint): ${endpoint}`);
+      } else {
+          console.error(`[FMP] Network Error: ${msg}`);
+      }
+      
+      return null;
+    }
+  }
+
+  // --- 1. PRICES (Stable: /quote?symbol=AAPL) ---
+
+  async getPrice(ticker: string): Promise<any> {
+    const data = await this.fetchData('quote', `symbol=${ticker}`);
+    return data && data[0] ? data[0] : null;
+  }
+
+  async getQuote(ticker: string): Promise<any> {
+    return this.getPrice(ticker);
+  }
+
+  async getBatchPrices(tickers: string[]): Promise<any[]> {
+    if (!tickers.length) return [];
+    return await this.fetchData('quote', `symbol=${tickers.join(',')}`) || [];
+  }
+
+  // --- 2. HISTORY (Stable: /historical-price-full?symbol=AAPL) ---
+
+  async getDailyCandles(ticker: string, limit: number = 30): Promise<Candle[]> {
+    const data = await this.fetchData('historical-price-full', `symbol=${ticker}&timeseries=${limit}`);
+    return data && data.historical ? data.historical : [];
+  }
+
+  async getIntraday(ticker: string, interval: string = '5min'): Promise<any[]> {
+    // Stable might use /historical-chart/5min?symbol=AAPL or similar
+    // We try the query param pattern first as it is the Stable convention
+    return await this.fetchData(`historical-chart/${interval}`, `symbol=${ticker}`) || [];
+  }
+
+  // --- 3. NEWS (Stable: /news?tickers=AAPL) ---
+  
+  async getCompanyNews(ticker: string, limit: number = 10): Promise<any[]> {
+    return await this.fetchData('news', `tickers=${ticker}&limit=${limit}`) || [];
+  }
+
+  async getMarketNews(limit: number = 20): Promise<any[]> {
+    return await this.fetchData('news', `limit=${limit}`) || [];
+  }
+
+  // --- 4. FUNDAMENTALS (Stable: /profile?symbol=AAPL) ---
+
+  async getCompanyProfile(ticker: string): Promise<any> {
+    const data = await this.fetchData('profile', `symbol=${ticker}`);
+    return data && data[0] ? data[0] : null;
+  }
+
+  async getKeyMetrics(ticker: string, limit: number = 1): Promise<any> {
+    return await this.fetchData('key-metrics', `symbol=${ticker}&limit=${limit}`) || [];
+  }
+
+  async getFinancialRatios(ticker: string, period: string = 'annual', limit: number = 1): Promise<any> {
+    return await this.fetchData('ratios', `symbol=${ticker}&period=${period}&limit=${limit}`) || [];
+  }
+
+  async getIncomeStatement(ticker: string, period: string = 'annual', limit: number = 5): Promise<any[]> {
+    return await this.fetchData('income-statement', `symbol=${ticker}&period=${period}&limit=${limit}`) || [];
+  }
+
+  async getBalanceSheet(ticker: string, period: string = 'annual', limit: number = 5): Promise<any[]> {
+    return await this.fetchData('balance-sheet-statement', `symbol=${ticker}&period=${period}&limit=${limit}`) || [];
+  }
+
+  async getCashFlowStatement(ticker: string, period: string = 'annual', limit: number = 5): Promise<any[]> {
+    return await this.fetchData('cash-flow-statement', `symbol=${ticker}&period=${period}&limit=${limit}`) || [];
+  }
+
+  // --- 5. INSIDER & INSTITUTIONAL (Stable: /insider-trading?symbol=AAPL) ---
+
+  async getInsiderTrades(ticker: string): Promise<any[]> {
+    return await this.fetchData('insider-trading', `symbol=${ticker}&limit=100`) || [];
+  }
+  
+  async getInsiderFeed(): Promise<any[]> {
+    return await this.fetchData('insider-trading', `limit=50`) || [];
+  }
+
+  async getInstitutionalHolders(ticker: string): Promise<any[]> {
+    // Pluralization check: 'institutional-ownership' is common in Stable
+    return await this.fetchData('institutional-ownership', `symbol=${ticker}`) || [];
+  }
+
+  async get13F(cik: string): Promise<any[]> {
+    return await this.fetchData('13f', `cik=${cik}`) || [];
+  }
+
+  async getEtfHoldings(ticker: string): Promise<any[]> {
+    return await this.fetchData('etf-holder', `symbol=${ticker}`) || [];
+  }
+
+  // --- 6. ANALYSTS & ECONOMICS ---
+
+  async getAnalystEstimates(ticker: string): Promise<any[]> {
+    return await this.fetchData('analyst-estimates', `symbol=${ticker}`) || [];
+  }
+
+  async getPriceTargets(ticker: string): Promise<any[]> {
+    return await this.fetchData('price-target-consensus', `symbol=${ticker}`) || [];
+  }
+
+  async getEconomicIndicator(name: string): Promise<any[]> {
+    return await this.fetchData('economic', `name=${encodeURIComponent(name)}`) || [];
+  }
+  
+  async getEconomicData(name: string): Promise<any[]> {
+    return this.getEconomicIndicator(name);
+  }
+
+  async getTreasuryRates(): Promise<any[]> {
+    return await this.getEconomicIndicator('10Y');
+  }
+
+  // --- 7. OPTIONS & TECH ---
+
+  async getOptionChain(ticker: string): Promise<any[]> {
+    return await this.fetchData('options/chain', `symbol=${ticker}`) || [];
+  }
+
+  async getRSI(ticker: string, period: number = 14): Promise<any[]> {
+    return await this.fetchData('technical-indicators', `symbol=${ticker}&type=rsi&period=${period}`) || [];
+  }
+
+  async getSMA(ticker: string, period: number = 50): Promise<any[]> {
+    return await this.fetchData('technical-indicators', `symbol=${ticker}&type=sma&period=${period}`) || [];
+  }
+
+  // --- 8. LISTS ---
+
+  async getSP500Constituents(): Promise<any[]> {
+    return await this.fetchData('sp500_constituents');
+  }
+  
+  async getSP500List(): Promise<any[]> {
+    return this.getSP500Constituents();
+  }
+
+  // --- UTILS ---
+  
+  async getCompleteFundamentals(ticker: string): Promise<any> {
+    const [profile, metrics, ratios, income] = await Promise.all([
+      this.getCompanyProfile(ticker),
+      this.getKeyMetrics(ticker),
+      this.getFinancialRatios(ticker),
+      this.getIncomeStatement(ticker)
+    ]);
+    return { profile, metrics, ratios, income };
+  }
+
+  async checkConnection(): Promise<{ success: boolean; message: string }> {
+      const res = await this.getPrice('AAPL');
+      return { success: !!res, message: res ? 'Connected' : 'Failed' };
+  }
+  
+  async debugTicker(ticker: string): Promise<any> {
+      return {
+          keyPresent: !!this.apiKey,
+          url: `${this.baseUrl}/quote?symbol=${ticker}&apikey=HIDDEN`
+      };
+  }
+}
+
+export default new FmpService();

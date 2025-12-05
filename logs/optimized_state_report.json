@@ -1,0 +1,1607 @@
+{
+  "timestamp": "2025-12-02T04:19:38.036Z",
+  "static_analysis": [
+    {
+      "file": "accuracyFeedbackService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "adaptiveLearningService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "agentReliabilityService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "aiPatternDetectionEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "aiTipTrackerService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "alphaReplayService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "analystConsensusEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "analystDivergenceService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "anomalyDetectionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": true,
+      "status": "CLEAN"
+    },
+    {
+      "file": "anthropicService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "autonomousAlertService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "beneficiaryRouterService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "buybackMomentumEngine.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "cacheMonitoringService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "catalystHunterService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "ceoLanguageService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "chainReactionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "commodityShockService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "comprehensiveDataEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "confidenceAdjustmentService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "confidenceDriftService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "confidenceLedgerService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "confidenceRecalibrationService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "consensusEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "corporateActionsEngine.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "corporateQualityService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "correlationAnalysisService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "correlationHunterService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "crisisAmplifierService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "crossAssetCorrelationEngine.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": true,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "crossAssetRiskService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "crossSignalConsensusEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "cryptoIntelligenceService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "cryptoStockCorrelationService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "currencyShockService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "dailyIntelligenceService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "dailySummaryService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "darkPoolService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "dataIngestionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "dataVerificationService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "deepDiveService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "deepValuationEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": true,
+      "status": "CLEAN"
+    },
+    {
+      "file": "diagnosticsService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "divergenceDetectorService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "documentationService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "drawdownSensitivityService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "earningsDriftService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "earningsMAService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "earningsMomentumService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "earningsPatternService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "earningsWhisperService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "economicCalendarService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "economicDataService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "economicSurpriseService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": true,
+      "status": "CLEAN"
+    },
+    {
+      "file": "edgarService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "enhancedDeepDiveService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "enhancedIntelligenceService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "etfLeakageService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "etfShadowService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "eventReactionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "evolutionEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "executiveSummaryService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "executiveVettingService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "expandedSocialService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "fedSpeakService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": true,
+      "status": "CLEAN"
+    },
+    {
+      "file": "financialClockService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "financialHealthService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "finnhubService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "fmpService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "fundamentalAnalysisService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "gammaExposureService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "geminiService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "geopoliticalIntelligenceService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "globalCalendarService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "globalDivergenceService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "globalEtfUniverseEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "globalMacroForecastService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "globalNewsAttentionEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "globalRiskService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "governmentDataService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "hedgeFund13FEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": true,
+      "status": "CLEAN"
+    },
+    {
+      "file": "hedgeFundPatternEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "hedgingService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "historicalDataService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "historicalRAGEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "historyArchiverService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "inflationMapService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "insiderAccuracyService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "insiderIntentService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "insiderPatternEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "insiderPatternService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "institutionalFlowEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "institutionalFlowService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "institutionalOrderFlowService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "intelligenceThreadsService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "intelligentDigestService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "ivNavigatorService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "jobManagerService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "lazarusService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "liquidityTrapService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "liveStatusService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "llmRouterService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "localBusinessService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "macroLiquidityPulseEngine.ts",
+      "has_static_50": true,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "macroLiquidityService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "macroRegimeService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "manufacturingSupplyChainService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "marketBreadthEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": true,
+      "status": "CLEAN"
+    },
+    {
+      "file": "marketDataService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "marketEchoService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "marketSentimentService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "masterIngestionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "metaAnalystService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "metaCortexService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "microstructureService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "momentumService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "multiAgentValidationService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "multiMarketArbitrageService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "narrativeDriftService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "narrativePressureService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "narrativeSentimentService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "neuralChatService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "newsAggregatorService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "newsApiService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "newsEmbeddingService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "newsImpactEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "openaiService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "optionsFlowIntelligenceEngine.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "optionsRadarService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "outlierDetectionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "pairsTradingService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "paperTradingService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "patternRecognitionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "performanceAnalysisService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "policySimulatorService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "politicalIntelligenceService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "portfolioIntelligenceEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "portfolioManagerService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "predictionLoggerService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "predictionReviewService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "priceService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "priceStabilityService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "priceUpdaterService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "realDataIntegrationService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "realTimeFeedService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "realityCheckService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "recessionPredictorService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "redditService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "regimeTransitionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "researchAgentService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "retailInterpretabilityService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "reversalTrapService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "reverseArbitrageService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "reverseCorrelationService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "reverseScannerService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "revisionVelocityService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "riskConstraintService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "riskValidatorService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "scheduledIngestionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "schemaHarmonizerService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "seasonalityEngine.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "secEdgarService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "sectorCorrelationService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "sectorDiscoveryService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "sectorStressService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "selfImprovementService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "shadowLiquidityService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "shadowRotationService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "shortTrapService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "signalGeneratorService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "sipeLearningService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "smartMoneyHeatmapService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": true,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "smartMoneyService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "smcwLearningService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "socialSentimentService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "sourceGuardService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "storyModeService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "stressTestService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "supplyChainStressEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "systemStabilityService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "technicalIndicatorsService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "tickerUniverseService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "tickerVettingService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "tiingoService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "titanHunterService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "tradeArchitectService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "tradeManagementService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "tradingOpportunitiesService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "tribunalService.ts",
+      "has_static_50": true,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "SUSPICIOUS"
+    },
+    {
+      "file": "unifiedIntelligenceEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "unusualOptionsEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "userPortfolioService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "versionLockService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "volatilityNormalizerService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "volatilityRegimeEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "volatilityShockAwarenessService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "volatilitySurfaceEngine.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "wdiwaAttributionService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "whaleContrarianService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    },
+    {
+      "file": "yahooFinanceService.ts",
+      "has_static_50": false,
+      "has_mock_keyword": false,
+      "has_hardcoded_return": false,
+      "status": "CLEAN"
+    }
+  ],
+  "runtime_analysis": {
+    "target": "AAPL",
+    "final_score": 67,
+    "engines_total": 32,
+    "engines_fallback": 1,
+    "health_score": 97,
+    "details": [
+      {
+        "engine": "fsi",
+        "score": 67,
+        "fallback_used": false,
+        "details_count": 47
+      },
+      {
+        "engine": "ace",
+        "score": 0,
+        "fallback_used": true,
+        "details_count": 0
+      },
+      {
+        "engine": "ife",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "gmf",
+        "score": 30,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "carm",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "cae",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "scs",
+        "score": 70,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "bbm",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "mlp",
+        "score": 50,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "ofi",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "hfai",
+        "score": 75,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "iat",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "seas",
+        "score": 70,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "volsurf",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "iof",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "gnae",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "hapde",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "dve",
+        "score": 70,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "ipe",
+        "score": 1,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "mbe",
+        "score": 30,
+        "fallback_used": false,
+        "details_count": 1
+      },
+      {
+        "engine": "vre",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "uoa",
+        "score": 80,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "correlation",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "gamma",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "insider",
+        "score": 60,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "narrative",
+        "score": 100,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "shadow",
+        "score": 46,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "regime",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "agents",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "catalyst",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "volatility",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      },
+      {
+        "engine": "divergence",
+        "score": 0,
+        "fallback_used": false,
+        "details_count": 0
+      }
+    ]
+  },
+  "final_verdict": "CLEAN"
+}

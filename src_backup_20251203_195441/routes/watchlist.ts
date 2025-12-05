@@ -1,0 +1,67 @@
+import { Router } from 'express';
+import { db } from '../db/index.js';
+import { authenticateToken } from '../middleware/auth.js';
+
+const router = Router();
+
+// GET /api/watchlist - Get user's watchlist
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    const result = await db.query(
+      `SELECT id, symbol, asset_type, notes, focus_areas, price_alert_high, price_alert_low, created_at
+       FROM watchlist
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/watchlist - Add to watchlist
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { symbol, assetType, notes, focusAreas, priceAlertHigh, priceAlertLow } = req.body;
+
+    const result = await db.query(
+      `INSERT INTO watchlist (user_id, symbol, asset_type, notes, focus_areas, price_alert_high, price_alert_low)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (user_id, symbol) DO UPDATE
+       SET notes = EXCLUDED.notes,
+           focus_areas = EXCLUDED.focus_areas,
+           price_alert_high = EXCLUDED.price_alert_high,
+           price_alert_low = EXCLUDED.price_alert_low
+       RETURNING *`,
+      [userId, symbol.toUpperCase(), assetType, notes, focusAreas, priceAlertHigh, priceAlertLow]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/watchlist/:symbol - Remove from watchlist
+router.delete('/:symbol', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { symbol } = req.params;
+
+    await db.query(
+      `DELETE FROM watchlist WHERE user_id = $1 AND symbol = $2`,
+      [userId, symbol.toUpperCase()]
+    );
+
+    res.json({ message: 'Removed from watchlist' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;

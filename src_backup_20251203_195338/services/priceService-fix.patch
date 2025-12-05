@@ -1,0 +1,11 @@
+  async getCompanyProfile(ticker: string): Promise<any> {
+    return await finnhubService.getCompanyProfile(ticker);
+  }
+
+  async getCompanyNews(ticker: string, limit: number = 10): Promise<any[]> {
+    return await finnhubService.getCompanyNews(ticker, limit);
+  }
+
+  async getRecommendations(ticker: string): Promise<any[]> {
+    return await finnhubService.getRecommendations(ticker);
+  }
