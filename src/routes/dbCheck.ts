@@ -4,40 +4,43 @@ import pool from '../db/index.js';
 const router = express.Router();
 
 router.get('/diagnose', async (req, res) => {
+  // Capture config BEFORE connecting
+  const dbUrl = process.env.DATABASE_URL || '';
+  const configCheck = {
+    url_masked: dbUrl.replace(/:[^:]*@/, ':***@'),
+    is_internal: dbUrl.includes('railway.internal'),
+    node_env: process.env.NODE_ENV
+  };
+
   try {
-    // 1. Check Connection
     const client = await pool.connect();
-    
-    // 2. Get Table List
-    const tablesRes = await client.query(`
+    const resTables = await client.query(`
         SELECT table_name FROM information_schema.tables 
         WHERE table_schema = 'public'
     `);
-    const tables = tablesRes.rows.map(r => r.table_name);
-
-    // 3. Get Row Counts (Critical Validation)
-    let tipsCount = 0;
+    const tables = resTables.rows.map(r => r.table_name);
+    
+    // Check row counts
+    let tipsCount = -1;
     if (tables.includes('ai_stock_tips')) {
-        const countRes = await client.query('SELECT count(*) FROM ai_stock_tips');
-        tipsCount = parseInt(countRes.rows[0].count);
+        const c = await client.query('SELECT count(*) FROM ai_stock_tips');
+        tipsCount = parseInt(c.rows[0].count);
     }
 
     client.release();
 
-    // 4. Report
     res.json({
       status: 'SUCCESS',
-      connected: true,
-      database_url_masked: process.env.DATABASE_URL?.split('@')[1], // Show host only
-      table_count: tables.length,
-      has_critical_tables: tables.includes('ai_stock_tips'),
-      tips_row_count: tipsCount,
-      tables_list: tables
+      config: configCheck,
+      tables_found: tables.length,
+      tips_count: tipsCount,
+      tables: tables
     });
 
   } catch (error: any) {
     res.status(500).json({
       status: 'ERROR',
+      config: configCheck,
       message: error.message,
       stack: error.stack
     });
