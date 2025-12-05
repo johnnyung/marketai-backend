@@ -5,18 +5,18 @@ dotenv.config();
 
 const { Pool } = pg;
 
-// Railway Internal = No SSL usually needed
-// Railway External = SSL Required
-const isProduction = process.env.NODE_ENV === 'production';
-const isExternal = process.env.DATABASE_URL?.includes('rlwy.net');
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: (isExternal || (isProduction && isExternal)) ? { rejectUnauthorized: false } : false,
-  connectionTimeoutMillis: 5000
+  // In production (Railway), ALWAYS use SSL with rejectUnauthorized: false.
+  // This works for both Internal (postgres.railway.internal) and External (rlwy.net) connections.
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  connectionTimeoutMillis: 5000, // 5 seconds timeout
+  max: 20 // Connection pool size
 });
 
-pool.on('error', (err) => console.error('❌ Idle DB Error:', err));
+pool.on('error', (err) => {
+  console.error('❌ Idle DB Client Error:', err.message);
+});
 
 export const query = (text: string, params?: any[]) => pool.query(text, params);
 export const getClient = () => pool.connect();
