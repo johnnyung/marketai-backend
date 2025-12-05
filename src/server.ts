@@ -1,3 +1,4 @@
+import dbCheck from './routes/dbCheck.js';
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -206,6 +207,8 @@ app.use((err, req, res, next) => {
   console.error('Unhandled Error:', err);
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
+
+app.use("/api/system", dbCheck);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
