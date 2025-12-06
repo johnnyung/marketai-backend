@@ -1,5 +1,8 @@
 [build]
 builder = "NIXPACKS"
 
-[deploy]
-start = "node dist/server.js"
+[nixpacks.steps]
+build = ["npm install", "npm run build"]
+
+[start]
+cmd = "node dist/server.js"
