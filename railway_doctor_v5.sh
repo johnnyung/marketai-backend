@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -e
+
+echo "====================================================="
+echo " 🚑  RAILWAY DOCTOR v5 — Prompt-Aware Inspector"
+echo "====================================================="
+
+echo ""
+echo "STEP 1 — Local build check..."
+if [ ! -f "dist/server.js" ]; then
+  echo "❌ dist/server.js missing — rebuilding..."
+  npm run build
+else
+  echo "✔ dist/server.js exists"
+fi
+
+echo ""
+echo "STEP 2 — Checking start script..."
+START_CMD=$(jq -r '.scripts.start' package.json)
+echo "Current start script: $START_CMD"
+if [[ "$START_CMD" != "node dist/server.js" ]]; then
+  echo "⚠️ Fixing start script..."
+  jq '.scripts.start="node dist/server.js"' package.json > package.tmp.json
+  mv package.tmp.json package.json
+  echo "✔ start script repaired"
+else
+  echo "✔ start script OK"
+fi
+
+echo ""
+echo "STEP 3 — Preparing remote diagnostic script..."
+cat > .railway_remote_doctor.sh << 'EOSHELL'
+echo "================= RAILWAY REMOTE DOCTOR ==============="
+echo ""
+echo "👉 PROCESS LIST"
+ps aux | grep node || echo "no node processes running"
+echo ""
+echo "👉 DIST FOLDER"
+ls -R /app/dist 2>/dev/null || echo "❌ dist folder missing"
+echo ""
+echo "👉 ENVIRONMENT VARIABLES"
+printenv | sort
+echo ""
+echo "👉 PORTS LISTENING"
+netstat -tulnp 2>/dev/null || ss -tulnp 2>/dev/null || echo "no netstat or ss available"
+echo ""
+echo "========================================================"
+echo "   END OF REMOTE REPORT"
+echo "========================================================"
+EOSHELL
+
+echo "✔ Remote diagnostic script prepared"
+
+echo ""
+echo "STEP 4 — Executing remote commands in Railway shell..."
+echo "This will take ~3–5 seconds…"
+
+expect << 'EOFEXP'
+set timeout 20
+
+spawn railway shell
+
+# Wait for ANY shell prompt ending with "$ "
+expect -re {[$#] $}
+
+send "bash .railway_remote_doctor.sh\r"
+
+# Wait for completion marker
+expect "END OF REMOTE REPORT"
+
+send "exit\r"
+EOFEXP
+
+echo ""
+echo "====================================================="
+echo "   ✅ Railway Doctor v5 complete"
+echo "====================================================="
