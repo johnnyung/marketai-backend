@@ -1,3 +1,17 @@
+#!/bin/bash
+set -e
+
+echo "====================================================="
+echo "  🚀 Upgrading Crash Scanner → Full Backend X-Ray"
+echo "====================================================="
+
+FILE="src/routes/debugCrash.ts"
+
+mkdir -p src/routes
+
+echo "📄 Writing upgraded debugCrash.ts ..."
+
+cat > "$FILE" << 'EOS'
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -100,3 +114,28 @@ router.get("/crash-scan", async (req, res) => {
 });
 
 export default router;
+EOS
+
+echo "🔧 Patching server.ts to mount /debug/crash-scan ..."
+# Remove any prior broken inserts
+sed -i '' '/debugCrash/d' src/server.ts
+
+# Add clean import
+sed -i '' '1 a\
+import debugCrash from "./routes/debugCrash.js";
+' src/server.ts
+
+# Add clean mount AFTER api routes
+sed -i '' '/app.use(.*api\/health.*)/a\
+app.use("/debug", debugCrash);
+' src/server.ts
+
+echo "🏗 Rebuilding..."
+npm run build
+
+echo "====================================================="
+echo "  ✅ Debug X-Ray Installed"
+echo ""
+echo "  Now run after deploying to Railway:"
+echo "  curl https://marketai-backend-production-b474.up.railway.app/debug/crash-scan"
+echo "====================================================="

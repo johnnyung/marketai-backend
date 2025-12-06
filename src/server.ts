@@ -1,4 +1,5 @@
 import express from "express";
+import debugCrash from "./routes/debugCrash.js";
 import cors from "cors";
 import morgan from "morgan";
 
@@ -10,7 +11,6 @@ import brainRoutes from "./routes/brain.js";
 
 /* === Debug Pack === */
 import debugRailway from "./routes/debugRailway.js";
-import debugCrash from "./routes/debugCrash.js";
 
 const app = express();
 
@@ -44,8 +44,8 @@ app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/system", systemRoutes);
 app.use("/api/health", healthRoutes);
-app.use("/api/brain", brainRoutes);
 app.use("/debug", debugCrash);
+app.use("/api/brain", brainRoutes);
 
 /* === Debug Route === */
 app.use("/debug", debugRailway);
