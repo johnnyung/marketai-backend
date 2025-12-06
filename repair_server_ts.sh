@@ -1,3 +1,11 @@
+#!/bin/bash
+set -e
+
+echo "==============================================="
+echo "   🔧 Repairing src/server.ts (Full Restore)"
+echo "==============================================="
+
+cat > src/server.ts << 'EOS'
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -56,3 +64,16 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 export default app;
+EOS
+
+echo "✅ server.ts fully restored"
+
+echo "🏗 Rebuilding..."
+npm run build
+
+echo "==============================================="
+echo " DONE — Commit & Push:"
+echo "   git add ."
+echo "   git commit -m 'Restore clean server.ts'"
+echo "   git push"
+echo "==============================================="
