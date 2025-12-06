@@ -43,7 +43,17 @@ app.use("/api/system", systemRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/brain", brainRoutes);
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
-export default app;
+// --------------------------------------------------
+// 🚀 Server Listen — REQUIRED for Railway Deployment
+// --------------------------------------------------
+
+
+// --------------------------------------------------
+// 🚀 Server Listen — REQUIRED for Railway Deployment
+// --------------------------------------------------
+const PORT = Number(process.env.PORT) || 8080;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("🚀 Server running on port " + PORT + " (bound to 0.0.0.0)");
+});
