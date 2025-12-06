@@ -1,5 +1,12 @@
 #!/bin/bash
 
+echo "==============================================="
+echo "   🔧 Generating Corrected Backend Validator"
+echo "==============================================="
+
+cat > backend_validator.sh << 'EOS'
+#!/bin/bash
+
 echo "======================================================"
 echo "         MARKETAI — BACKEND DEPLOYMENT VALIDATOR"
 echo "======================================================"
@@ -98,3 +105,7 @@ else
   echo "❌ $FAIL TEST(S) FAILED — Review needed."
 fi
 echo "======================================================"
+EOS
+
+chmod +x backend_validator.sh
+echo "🎉 Validator updated successfully!"
