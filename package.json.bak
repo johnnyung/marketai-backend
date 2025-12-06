@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/bootstrap.js",
     "dev": "node --import ./dotenv-preload.js dist/bootstrap.js",
     "diag:engines": "node dist/scripts/engine_diagnostics.js",
     "probe:top3": "node dist/scripts/full_top3_probe.js",
