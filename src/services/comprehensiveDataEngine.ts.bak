@@ -1,4 +1,4 @@
-import pool from '../db/index';
+import { pool } from '../db/index';
 import Anthropic from '@anthropic-ai/sdk';
 import axios from 'axios';
 import aiTipGenerator from './aiTipGenerator.js';

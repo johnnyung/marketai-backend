@@ -1,4 +1,4 @@
-import pool from '../../db/index.js';
+import { pool } from '../../db/index.js';
 export const dataCoverageMap = {
     async mapCoverage() {
         const res = await pool.query(`SELECT COUNT(*) FROM digest_entries WHERE created_at > NOW() - INTERVAL '24h'`);

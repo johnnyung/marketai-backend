@@ -1,3 +1,4 @@
+import { pool } from "../db/index.js";
 // src/services/dataVerificationService.ts
 // Verifies if data sources are returning REAL data vs mock/simulated
 
@@ -102,10 +103,6 @@ class DataVerificationService {
     try {
       // Check if raw_data_collection has real data or mock
       const { Pool } = await import('pg');
-      const pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
-      });
 
       const result = await pool.query(`
         SELECT 

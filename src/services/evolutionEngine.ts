@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import evolutionLoopController from './metaLearning/evolutionLoopController.js';
 import Anthropic from '@anthropic-ai/sdk';
 import metaCortexService from './metaCortexService.js';

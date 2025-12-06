@@ -1,3 +1,4 @@
+import { pool } from "../db/index.js";
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';
@@ -5,10 +6,6 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Railway usually needs this
-});
 
 async function run() {
     try {

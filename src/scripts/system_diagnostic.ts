@@ -1,3 +1,4 @@
+import { pool } from "../db/index.js";
 import axios from 'axios';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
@@ -39,11 +40,6 @@ async function checkEnv() {
 async function checkDB() {
     console.log('\n2. DATABASE CONNECTIVITY');
     console.log('------------------------');
-    const pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 5000
-    });
 
     try {
         const start = Date.now();

@@ -1,11 +1,8 @@
+import { pool } from "../db/index.js";
 import { Pool } from 'pg';
 import redditService from './redditService.js';
 import newsApiService from './newsApiService.js';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 class SocialSentimentService {
   

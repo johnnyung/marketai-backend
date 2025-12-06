@@ -1,13 +1,10 @@
+import { pool } from "../db/index.js";
 // backend/src/services/patternRecognitionService.ts
 // Phase 4: Learn which dimension patterns predict winning trades
 
 import { Pool } from 'pg';
 import Anthropic from '@anthropic-ai/sdk';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,

@@ -3,7 +3,7 @@
 
 import express from 'express';
 import comprehensiveDataScheduler from '../schedulers/comprehensiveDataScheduler.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 const router = express.Router();
 

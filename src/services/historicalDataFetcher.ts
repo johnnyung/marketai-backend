@@ -2,7 +2,7 @@
 // Uses Polygon.io - Free tier: 5 calls/min, very reliable
 
 import axios from 'axios';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 class HistoricalDataFetcher {
   private polygonKey: string;

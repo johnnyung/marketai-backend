@@ -1,7 +1,7 @@
 // src/routes/unifiedIntelligenceRoutes.ts
 import express from 'express';
 import unifiedIntelligenceEngine from '../services/unifiedIntelligenceEngine.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 const router = express.Router();
 

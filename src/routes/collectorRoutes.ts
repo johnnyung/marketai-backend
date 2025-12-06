@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import NewsCollectorService from '../services/collectors/NewsCollectorService.js';
 import { authenticateToken } from '../middleware/auth.js';
 

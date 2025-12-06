@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import comprehensiveDataEngine from '../services/comprehensiveDataEngine.js';
 import catalystHunterService from '../services/catalystHunterService.js';
 import jobManager from '../services/jobManagerService.js';

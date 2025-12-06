@@ -2,7 +2,7 @@
 // Fixed API routes with proper error handling
 
 import express from 'express';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 const router = express.Router();
 

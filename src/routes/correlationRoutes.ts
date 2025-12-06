@@ -1,6 +1,6 @@
 import express from 'express';
 import correlationHunterService from '../services/correlationHunterService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 const router = express.Router();
 

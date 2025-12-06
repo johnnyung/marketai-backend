@@ -1,3 +1,4 @@
+import { pool } from "../../db/index.js";
 import axios from 'axios';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
@@ -9,10 +10,6 @@ dotenv.config();
 // GLOBAL WATCHDOG
 setTimeout(() => { console.error("🚨 TIMEOUT: Trace exceeded 20s"); process.exit(1); }, 20000);
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 const TICKER = 'AAPL';
 const API_URL = process.env.MARKETAI_BACKEND_URL || 'https://marketai-backend-production-397e.up.railway.app';

@@ -1,6 +1,6 @@
 import fmpService from '../fmpService.js';
 import { IngestionResult } from './ingestionTypes.js';
-import pool from '../../db/index.js';
+import { pool } from '../../db/index.js';
 
 class InsiderIngestionService {
     async run(): Promise<IngestionResult> {

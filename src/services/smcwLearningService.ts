@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import economicCalendarService from './economicCalendarService.js';
 
 interface SeasonalProfile {

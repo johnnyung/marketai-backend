@@ -1,6 +1,6 @@
 import fmpService from './fmpService.js';
 import marketDataService from './marketDataService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 interface RecessionMetrics {
   probability: number; // 0-100

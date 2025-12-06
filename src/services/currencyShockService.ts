@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import marketDataService from './marketDataService.js';
 
 interface CurrencyShock {

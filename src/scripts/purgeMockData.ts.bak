@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 async function purgeMockData() {
   console.log('🗑️  Purging all mock/simulated data...');

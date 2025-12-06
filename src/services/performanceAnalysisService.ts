@@ -1,12 +1,9 @@
+import { pool } from "../db/index.js";
 // backend/src/services/performanceAnalysisService.ts
 // Analyzes past AI signals to learn what works and what doesn't
 
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 interface Signal {
   id: number;

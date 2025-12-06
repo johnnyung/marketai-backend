@@ -1,3 +1,4 @@
+import { pool } from "../db/index.js";
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
@@ -24,10 +25,6 @@ dotenv.config();
 const BASE_URL = 'https://marketai-backend-production-397e.up.railway.app';
 const AUDIT_TOKEN = process.env.AUDIT_MODE_SECRET || 'marketai-audit-bypass-key-2025';
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false } // Required for Railway DB
-});
 
 let score = 100;
 let criticalFailures = 0;

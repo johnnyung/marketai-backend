@@ -1,4 +1,4 @@
-import pool from '../../db/index.js';
+import { pool } from '../../db/index.js';
 export const memorySnapshotLogger = {
     async logSnapshot(data: any) {
         await pool.query(`

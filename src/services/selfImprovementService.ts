@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import metaCortexService from './metaCortexService.js';
 import evolutionEngine from './evolutionEngine.js';
 import autonomousAlertService from './autonomousAlertService.js';

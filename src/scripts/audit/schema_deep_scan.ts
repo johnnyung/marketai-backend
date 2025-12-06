@@ -1,11 +1,8 @@
+import { pool } from "../../db/index.js";
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 // --- THE GOLDEN MANIFEST (v113-F2) ---
 // Defines exactly what MUST exist for the engines to work.

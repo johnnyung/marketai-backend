@@ -3,7 +3,7 @@
 // AI Tip Generator (Stable FMP ONLY) — Aggressive 1% Mode
 // ============================================================
 
-import pool from "../db/index.js";
+import { pool } from "../db/index.js";
 import { getStablePrice } from "./fmpStableService.js";
 
 type Trend = "uptrend" | "downtrend" | "sideways";

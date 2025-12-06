@@ -1,11 +1,8 @@
+import { pool } from "../db/index.js";
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 const REVERSE_PATTERNS = [
   { driver: 'QQQ', target: 'BTC', beta: 0.8, corr: 0.75, type: 'equity_spillover' },

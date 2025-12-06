@@ -1,7 +1,7 @@
 // backend/src/services/socialIntelligenceIntegration.ts
 // FINAL FIXED: Normalized sentiment + truncated source_name
 
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import redditService from './redditService.js';
 import newsApiService from './newsApiService.js';
 import aiTickerExtractor from './aiTickerExtractor.js';

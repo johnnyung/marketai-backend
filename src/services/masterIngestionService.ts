@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import liveStatusService from './liveStatusService.js';
 import researchAgentService from './researchAgentService.js';
 import sectorDiscoveryService from './sectorDiscoveryService.js';

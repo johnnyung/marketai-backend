@@ -1,12 +1,9 @@
+import { pool } from "../db/index.js";
 import 'dotenv/config';
 import wdiwaAttributionService from '../services/wdiwaAttributionService.js';
 import confidenceRecalibrationService from '../services/confidenceRecalibrationService.js';
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 async function test() {
     console.log("🧪 TESTING WDIWA (Attribution Optimizer)...");

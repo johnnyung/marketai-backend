@@ -2,7 +2,7 @@
 // Analyzes 3 years of data to find crypto-stock correlations
 
 import Anthropic from '@anthropic-ai/sdk';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY

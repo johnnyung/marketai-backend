@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import regimeTransitionService from './regimeTransitionService.js'; // FIXED: Updated to v110 Engine
 import Anthropic from '@anthropic-ai/sdk';
 

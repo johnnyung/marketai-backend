@@ -1,6 +1,6 @@
 import axios from 'axios';
 import liveStatusService from '../liveStatusService.js';
-import pool from '../../db/index.js';
+import { pool } from '../../db/index.js';
 
 const FMP_KEY = process.env.FMP_API_KEY;
 

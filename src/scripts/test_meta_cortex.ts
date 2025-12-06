@@ -1,11 +1,8 @@
+import { pool } from "../db/index.js";
 import 'dotenv/config';
 import metaCortexService from '../services/metaCortexService.js';
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 async function test() {
     console.log("🧪 TESTING META-CORTEX (Self-Diagnosis)...");

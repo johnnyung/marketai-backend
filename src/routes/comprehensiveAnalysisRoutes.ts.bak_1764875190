@@ -3,7 +3,7 @@ import express from 'express';
 import intelligentDigestService from '../services/intelligentDigestService.js';
 import aiTipGenerator from '../services/aiTipGenerator.js';
 import intelligenceThreadsService from '../services/intelligenceThreadsService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 const router = express.Router();
 

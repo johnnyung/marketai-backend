@@ -1,3 +1,4 @@
+import { pool } from "../db/index.js";
 // backend/src/routes/digestCleanup.ts
 // Data Cleanup Routes - Remove bad dates and old entries
 
@@ -6,10 +7,6 @@ import { Pool } from 'pg';
 
 const router = express.Router();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 /**
  * Clean up bad dates and old data

@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import marketDataService from './marketDataService.js';
 import historicalDataService from './historicalDataService.js';
 import { TechnicalMath } from '../utils/mathUtils.js';

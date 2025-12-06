@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import confidenceDriftService from '../services/confidenceDriftService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 async function test() {
     console.log("🧪 TESTING CDC (Confidence Drift)...");

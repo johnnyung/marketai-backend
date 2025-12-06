@@ -1,4 +1,4 @@
-import pool from '../../db/index.js';
+import { pool } from '../../db/index.js';
 // Wraps predictionReviewService to provide raw stats
 export const outcomeTracker = {
     async getRecentOutcomes(days: number = 7) {

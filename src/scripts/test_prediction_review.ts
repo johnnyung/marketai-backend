@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import predictionLoggerService from '../services/predictionLoggerService.js';
 import predictionReviewService from '../services/predictionReviewService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 async function test() {
     console.log("🧪 TESTING PREDICTION REVIEW ENGINE...");

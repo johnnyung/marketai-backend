@@ -1,6 +1,6 @@
 // src/routes/ai-tips.ts
 import express from "express";
-import pool from "../db/index.js";
+import { pool } from "../db/index.js";
 import aiTipGenerator from "../services/aiTipGenerator.js";
 
 const router = express.Router();

@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import drawdownSensitivityService from './drawdownSensitivityService.js';
 import sipeLearningService from './sipeLearningService.js';
 import smcwLearningService from './smcwLearningService.js';

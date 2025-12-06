@@ -1,13 +1,10 @@
+import { pool } from "../db/index.js";
 // backend/src/services/priceUpdaterService.ts
 // Updates current prices and P/L for all open AI Tip Tracker positions
 
 import { Pool } from 'pg';
 import axios from 'axios';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 

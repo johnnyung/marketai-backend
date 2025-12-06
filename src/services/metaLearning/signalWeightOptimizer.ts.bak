@@ -1,4 +1,4 @@
-import pool from '../../db/index.js';
+import { pool } from '../../db/index.js';
 export const signalWeightOptimizer = {
     async optimize(attribution: Record<string, number>) {
         const weights: Record<string, number> = {};

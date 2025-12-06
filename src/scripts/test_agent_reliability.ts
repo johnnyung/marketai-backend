@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import agentReliabilityService from '../services/agentReliabilityService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 async function test() {
     console.log("🧪 TESTING AGENT RELIABILITY ENGINE...");

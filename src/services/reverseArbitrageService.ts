@@ -1,5 +1,5 @@
 import marketDataService from './marketDataService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 interface ArbitrageSignal {
   driver: string;

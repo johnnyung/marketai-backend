@@ -1,3 +1,4 @@
+import { pool } from "../../db/index.js";
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
@@ -12,10 +13,6 @@ import marketDataService from '../../services/marketDataService.js';
 dotenv.config();
 
 // Local pool for the audit script itself
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 const TEST_SCENARIOS = [
     { ticker: 'AAPL', type: 'blue_chip', sector: 'Technology', sentiment: 85 },

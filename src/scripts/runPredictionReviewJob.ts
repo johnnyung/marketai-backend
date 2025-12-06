@@ -1,12 +1,9 @@
+import { pool } from "../db/index.js";
 import 'dotenv/config';
 import predictionReviewService from '../services/predictionReviewService.js';
 import { Pool } from 'pg';
 
 // Database connection for cleanup if needed
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 async function run() {
   console.log("🕒 STARTING NIGHTLY PREDICTION REVIEW JOB...");

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import economicCalendarService from '../services/economicCalendarService.js';
 
 const router = Router();

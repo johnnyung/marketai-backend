@@ -1,5 +1,5 @@
 import economicCalendarService from './economicCalendarService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 interface ESIMetrics {
   score: number; // -100 to +100

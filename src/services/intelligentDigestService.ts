@@ -1,5 +1,5 @@
 import tickerUniverseService from './tickerUniverseService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 class IntelligentDigestService {
   

@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import Anthropic from '@anthropic-ai/sdk';
 import fmpService from './fmpService.js';
 import marketDataService from './marketDataService.js';

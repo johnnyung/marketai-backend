@@ -1,7 +1,7 @@
 // src/routes/digest.ts
 import express from 'express';
 import intelligentDigestService from '../services/intelligentDigestService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 const router = express.Router();
 

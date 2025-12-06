@@ -1,5 +1,5 @@
 import express from 'express';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import Anthropic from '@anthropic-ai/sdk';

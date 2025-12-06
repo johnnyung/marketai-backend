@@ -1,13 +1,10 @@
+import { pool } from "../db/index.js";
 // backend/src/services/dailyIntelligenceService.ts
 // Daily Intelligence Reports - AI-generated summaries of digest data
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY

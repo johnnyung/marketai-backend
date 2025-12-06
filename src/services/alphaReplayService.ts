@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import financialClockService from './financialClockService.js';
 
 interface ReplaySignal {

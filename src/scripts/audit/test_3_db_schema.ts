@@ -1,7 +1,7 @@
+import { pool } from "../../db/index.js";
 import { Pool } from 'pg';
 import 'dotenv/config';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 
 const TABLES = [
     'ai_stock_tips', 'trades', 'digest_entries', 'historical_events',

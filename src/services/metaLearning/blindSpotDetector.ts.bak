@@ -1,4 +1,4 @@
-import pool from '../../db/index.js';
+import { pool } from '../../db/index.js';
 export const blindSpotDetector = {
     async scan() {
         // Check for sectors with 0 coverage

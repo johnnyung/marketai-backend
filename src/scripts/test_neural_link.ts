@@ -1,3 +1,4 @@
+import { pool } from "../db/index.js";
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
 
@@ -34,10 +35,6 @@ import catalystHunterService from '../services/catalystHunterService.js';
 
 dotenv.config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
 
 async function testVector(name: string, fn: () => Promise<any>) {
     process.stdout.write(`   Testing ${name.padEnd(30)} ... `);

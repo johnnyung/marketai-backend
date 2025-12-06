@@ -1,7 +1,7 @@
 // src/services/liveCorrelationPredictor.ts
 // Makes real-time predictions and validates them Monday morning
 
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import axios from 'axios';
 
 class LiveCorrelationPredictor {

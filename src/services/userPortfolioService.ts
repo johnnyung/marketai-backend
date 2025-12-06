@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import unifiedIntelligenceFactory from './unifiedIntelligenceFactory.js';
 import { adaptForPortfolio } from '../utils/uiResponseAdapter.js';
 

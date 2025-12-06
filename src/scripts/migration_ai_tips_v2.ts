@@ -5,7 +5,7 @@
 // - Adds index on (ticker, status)
 // ============================================================
 
-import pool from "../db/index.js";
+import { pool } from "../db/index.js";
 
 async function run() {
   console.log("🚀 Running migration_ai_tips_v2...");

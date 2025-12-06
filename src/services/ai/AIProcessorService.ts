@@ -1,4 +1,4 @@
-import pool from '../../db/index.js';
+import { pool } from '../../db/index.js';
 import aiTickerExtractor from '../aiTickerExtractor.js';
 import crypto from 'crypto';
 

@@ -8,9 +8,6 @@ if (!process.env.DATABASE_URL) {
 // MARKETAI DB CLIENT RULES:
 // - One Pool instance only
 // - Named export only (no default export)
-// - ssl: false (Railway handled by connection string / environment)
 
-export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: false
 });

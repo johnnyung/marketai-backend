@@ -1,4 +1,4 @@
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 import axios from 'axios';
 
 class CryptoStockCorrelationService {

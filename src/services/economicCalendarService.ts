@@ -1,10 +1,7 @@
+import { pool } from "../db/index.js";
 // src/services/economicCalendarService.ts
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 

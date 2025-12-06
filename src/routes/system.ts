@@ -1,13 +1,10 @@
+import { pool } from "../db/index.js";
 import { Router } from 'express';
 import { Pool } from 'pg';
 // Note: We do NOT import authenticateToken here because health should be public
 import marketDataService from '../services/marketDataService.js';
 
 const router = Router();
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 // PUBLIC ROUTE - No Login Required
 router.get('/health', async (req, res) => {

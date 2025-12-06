@@ -1,5 +1,5 @@
 import marketDataService from './marketDataService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 interface GlobalRegime {
   regime: 'GLOBAL_BULL' | 'GLOBAL_BEAR' | 'US_EXCEPTIONALISM' | 'GLOBAL_DRAG' | 'MIXED';

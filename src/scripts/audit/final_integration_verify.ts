@@ -1,3 +1,4 @@
+import { pool } from "../../db/index.js";
 import axios from 'axios';
 import { Pool } from 'pg';
 import 'dotenv/config';
@@ -5,7 +6,6 @@ import 'dotenv/config';
 const BASE_URL = process.env.MARKETAI_BACKEND_URL || 'https://marketai-backend-production-397e.up.railway.app';
 const AUDIT_TOKEN = process.env.AUDIT_MODE_SECRET || 'marketai-audit-bypass-key-2025';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 
 async function runAudit() {
   console.log(`   🌐 Target: ${BASE_URL}`);

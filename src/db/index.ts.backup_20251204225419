@@ -8,11 +8,9 @@ if (!process.env.DATABASE_URL) {
 
 console.log("🔍 DB URL IN USE:", process.env.DATABASE_URL);
 
-export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: false
 });
 
 // 🔥 CRITICAL FIX — restore default export:
-//   All your routes & services expect `import pool from "..."`
+//   All your routes & services expect `import { pool } from "..."`
 export default pool;

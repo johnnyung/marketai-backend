@@ -1,13 +1,10 @@
+import { pool } from "../db/index.js";
 // backend/src/services/executiveVettingService.ts
 // Analyzes CEO, CFO, Board quality and insider transactions
 
 import { Pool } from 'pg';
 import axios from 'axios';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 const SEC_EDGAR_BASE = 'https://www.sec.gov';
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;

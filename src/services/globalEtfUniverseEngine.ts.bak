@@ -1,5 +1,5 @@
 import fmpService from './fmpService.js';
-import pool from '../db/index.js';
+import { pool } from '../db/index.js';
 
 // The "Titans" - ETFs that define the market structure
 const TARGET_ETFS = [
