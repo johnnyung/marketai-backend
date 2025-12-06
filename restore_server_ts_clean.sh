@@ -1,3 +1,13 @@
+#!/bin/bash
+set -e
+
+SERVER="src/server.ts"
+
+echo "====================================="
+echo "   🔧 Restoring clean server.ts"
+echo "====================================="
+
+cat > $SERVER << 'EOS'
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -67,3 +77,15 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 export default app;
+EOS
+
+echo "📦 Rebuilding..."
+npm run build
+
+echo "====================================="
+echo "  ✔ server.ts restored"
+echo "  NOW RUN:"
+echo "      git add ."
+echo "      git commit -m \"Restore stable server.ts\""
+echo "      git push"
+echo "====================================="
