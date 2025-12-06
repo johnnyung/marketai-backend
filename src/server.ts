@@ -10,6 +10,7 @@ import brainRoutes from "./routes/brain.js";
 
 /* === Debug Pack === */
 import debugRailway from "./routes/debugRailway.js";
+import debugCrash from "./routes/debugCrash.js";
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/system", systemRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/brain", brainRoutes);
+app.use("/debug", debugCrash);
 
 /* === Debug Route === */
 app.use("/debug", debugRailway);
