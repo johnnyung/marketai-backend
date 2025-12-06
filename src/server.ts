@@ -7,15 +7,22 @@ import systemRoutes from "./routes/system.js";
 import healthRoutes from "./routes/health.js";
 import brainRoutes from "./routes/brain.js";
 
-// Debug / X-Ray routes
 import debugRailway from "./routes/debugRailway.js";
 import debugCrash from "./routes/debugCrash.js";
 
 const app = express();
 
-// --------------------------------------
-// CORS CONFIG
-// --------------------------------------
+/* ----------------------------------------------------
+   GLOBAL MIDDLEWARE
+----------------------------------------------------- */
+
+app.use(express.json());
+app.use(morgan("dev"));
+
+/* ----------------------------------------------------
+   CLEAN CORS CONFIG (ONLY ONE)
+----------------------------------------------------- */
+
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
@@ -26,10 +33,11 @@ const allowedOrigins = [
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow server-side / curl / mobile (no origin)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+
+      console.log("🚫 BLOCKED ORIGIN:", origin);
+      return callback(new Error("CORS blocked: " + origin));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -37,42 +45,41 @@ app.use(
   })
 );
 
-// Preflight for all routes
 app.options("*", cors());
 
-app.use(express.json());
-app.use(morgan("dev"));
-
-// --------------------------------------
-// API ROUTES (ALL UNDER /api/...)
-// --------------------------------------
+/* ----------------------------------------------------
+   API ROUTES
+----------------------------------------------------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/system", systemRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/brain", brainRoutes);
 
-// --------------------------------------
-// DEBUG / X-RAY ROUTES (NON-API)
-// --------------------------------------
+/* ----------------------------------------------------
+   DEBUG ROUTES
+----------------------------------------------------- */
 app.use("/debug", debugRailway);
 app.use("/debug", debugCrash);
 
-// Root status (optional but nice for sanity checks)
+/* ----------------------------------------------------
+   ROOT CHECK
+----------------------------------------------------- */
+
 app.get("/", (_req, res) => {
   res.json({
     status: "ok",
     service: "marketai-backend",
-    message: "Root is alive. Use /api/* for main endpoints."
+    message: "Root is alive. Use /api/* for endpoints."
   });
 });
 
-// --------------------------------------
-// SERVER LISTEN (RAILWAY + LOCAL)
-// --------------------------------------
+/* ----------------------------------------------------
+   SERVER LISTEN
+----------------------------------------------------- */
 const PORT = Number(process.env.PORT) || 8080;
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT} (0.0.0.0 bound)`);
+  console.log(`🚀 Server running on port ${PORT} (bound to 0.0.0.0)`);
 });
 
 export default app;
