@@ -1,3 +1,22 @@
+#!/bin/bash
+set -e
+
+echo "==============================================="
+echo "  MARKETAI — REGENERATE CLEAN server.ts"
+echo "==============================================="
+
+BACKEND_DIR="$(pwd)"
+
+if [ ! -f "$BACKEND_DIR/package.json" ]; then
+  echo "❌ Run this from the marketai-backend root (where package.json lives)."
+  exit 1
+fi
+
+SERVER_TS="src/server.ts"
+
+echo "📄 Overwriting $SERVER_TS with clean, known-good implementation..."
+
+cat > "$SERVER_TS" << 'TS'
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -76,3 +95,22 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 export default app;
+TS
+
+echo "✅ Clean server.ts written."
+
+echo "🏗 Rebuilding backend..."
+npm run build
+
+echo "==============================================="
+echo "  DONE."
+echo "  Now run:"
+echo "    git add src/server.ts"
+echo "    git commit -m 'Regenerate clean server.ts routing'"
+echo "    git push"
+echo ""
+echo "  After Railway deploys, re-run:"
+echo "    ./backend_validator.sh"
+echo "    NEXT_PUBLIC_API_URL=\"https://marketai-backend-production-b474.up.railway.app\" \\"
+echo "      node frontend_test_suite.js"
+echo "==============================================="
